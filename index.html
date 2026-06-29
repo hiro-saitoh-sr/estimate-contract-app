@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>社会保険労務士齊藤事務所 見積・契約書作成</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Arial', sans-serif; background: #f0f4f8; color: #333; }
+.header { background: #2E4057; color: white; padding: 16px 24px; }
+.header h1 { font-size: 18px; }
+.header p { font-size: 12px; opacity: 0.8; margin-top: 4px; }
+.container { max-width: 900px; margin: 24px auto; padding: 0 16px; }
+.card { background: white; border-radius: 8px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.card h2 { font-size: 15px; font-weight: bold; color: #2E4057; border-bottom: 2px solid #2E4057; padding-bottom: 8px; margin-bottom: 16px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 12px; }
+.form-row.single { grid-template-columns: 1fr; }
+.form-row.triple { grid-template-columns: 1fr 1fr 1fr; }
+label { display: block; font-size: 12px; font-weight: bold; color: #555; margin-bottom: 4px; }
+input[type="text"], input[type="number"], input[type="date"], select {
+  width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px;
+  font-size: 13px; transition: border-color 0.2s;
+}
+input:focus, select:focus { outline: none; border-color: #2E4057; }
+.checkbox-group { display: flex; flex-direction: column; gap: 8px; }
+.checkbox-item { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
+.checkbox-item input { width: auto; }
+.result-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+.result-table th { background: #2E4057; color: white; padding: 8px 12px; text-align: left; }
+.result-table td { padding: 8px 12px; border-bottom: 1px solid #eee; }
+.result-table tr:last-child td { border-bottom: none; }
+.result-table .total-row td { background: #FFF9E6; font-weight: bold; font-size: 14px; }
+.result-table .discount-row td { background: #FDEBEC; color: #9B1C1C; font-weight: bold; }
+.result-table .tax-row td { color: #666; font-size: 12px; }
+.result-table .amount { text-align: right; }
+.btn-group { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+.btn { padding: 10px 20px; border: none; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; transition: opacity 0.2s; }
+.btn:hover { opacity: 0.85; }
+.btn-primary { background: #2E4057; color: white; }
+.btn-green { background: #27AE60; color: white; }
+.btn-blue { background: #2980B9; color: white; }
+.btn-orange { background: #E67E22; color: white; }
+.notice { background: #EBF5FB; border-left: 4px solid #2980B9; padding: 10px 14px; font-size: 12px; color: #555; margin-top: 12px; border-radius: 0 4px 4px 0; }
+.section-title { font-size: 13px; font-weight: bold; color: #2E4057; margin: 16px 0 8px; padding-bottom: 4px; border-bottom: 1px solid #eee; }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: bold; margin-left: 8px; }
+.tag-a { background: #EBF5FB; color: #2980B9; }
+.tag-b { background: #EAFAF1; color: #27AE60; }
+.tag-c { background: #FEF9E7; color: #F39C12; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>社会保険労務士齊藤事務所　見積・契約書作成システム</h1>
+  <p>料金自動計算 → 見積書・契約書PDF出力</p>
+</div>
+
+<div class="container">
+
+<!-- 基本情報 -->
+<div class="card">
+  <h2>基本情報</h2>
+  <div class="form-row">
+    <div>
+      <label>顧問先名 *</label>
+      <input type="text" id="clientName" placeholder="例：株式会社〇〇">
+    </div>
+    <div>
+      <label>従業員数（総数）*</label>
+      <input type="number" id="empCount" min="1" value="1" onchange="calc()">
+    </div>
+  </div>
+  <div class="form-row">
+    <div>
+      <label>郵便番号</label>
+      <input type="text" id="clientPostalCode" placeholder="例：123-4567">
+    </div>
+    <div>
+      <label>所在地</label>
+      <input type="text" id="clientAddress" placeholder="例：東京都〇〇区〇〇1-2-3">
+    </div>
+  </div>
+  <div class="form-row">
+    <div>
+      <label>契約開始日</label>
+      <input type="text" id="contractStart" placeholder="例：2026/7/1">
+    </div>
+    <div>
+      <label>契約終了日</label>
+      <input type="text" id="contractEnd" placeholder="例：2027/6/30">
+    </div>
+  </div>
+</div>
+
+<!-- 契約サービス -->
+<div class="card">
+  <h2>契約サービス選択</h2>
+
+  <div class="section-title">A. 労務サポート契約 <span class="tag tag-a">基本料 15,000円/月</span></div>
+  <div class="checkbox-group">
+    <label class="checkbox-item">
+      <input type="checkbox" id="serviceA" onchange="calc()">
+      労務サポート契約（基本料15,000円＋従業員数単価）
+    </label>
+  </div>
+
+  <div class="section-title">B. 給与計算サポート契約 <span class="tag tag-b">従業員数×単価</span></div>
+  <div class="checkbox-group">
+    <label class="checkbox-item">
+      <input type="checkbox" id="serviceB" onchange="calc()">
+      給与計算サポート契約（従業員数単価）
+    </label>
+  </div>
+
+  <div class="section-title">C. 処遇改善加算サポート契約 <span class="tag tag-c">基本料＋集計料＋従業員数単価</span></div>
+  <div class="checkbox-group">
+    <label class="checkbox-item">
+      <input type="checkbox" id="serviceC" onchange="calc()">
+      処遇改善加算サポート契約
+    </label>
+  </div>
+  <div id="serviceCOptions" style="display:none; margin-top:8px; margin-left:24px;">
+    <div class="form-row">
+      <div>
+        <label>処遇改善加算対象従業員数</label>
+        <input type="number" id="empCountC" min="1" value="1" onchange="calc()">
+      </div>
+      <div>
+        <label>種別</label>
+        <select id="serviceCType" onchange="calc()">
+          <option value="standard">通常（段階計算）</option>
+          <option value="withB">給与計算委託あり（単価50円/名）</option>
+          <option value="consultation">相談のみ（単価100円/名）</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- オフィスST・その他月次利用料 -->
+<div class="card">
+  <h2>オフィスステーション・その他月次利用料</h2>
+  <div class="notice">元Excelの月次サービス一覧にある任意項目です。顧問先の利用状況に合わせて選択してください（複数選択可）。</div>
+  <div style="margin-top:12px;" class="checkbox-group">
+    <label class="checkbox-item"><input type="checkbox" id="ostMyNumber1" onchange="calc()"> マイナンバープラス（顧問先が入力）100円/名</label>
+    <label class="checkbox-item"><input type="checkbox" id="ostMyNumber2" onchange="calc()"> マイナンバープラス（事務所が入力）200円/名</label>
+    <label class="checkbox-item"><input type="checkbox" id="ostRomu" onchange="calc()"> オフィスST 労務（A契約あり想定）200円/名</label>
+    <label class="checkbox-item"><input type="checkbox" id="ostRomuNoA" onchange="calc()"> オフィスST 労務（A契約なし）400円/名</label>
+    <label class="checkbox-item"><input type="checkbox" id="ostKyuyo" onchange="calc()"> オフィスST 給与（A契約あり想定）200円/名</label>
+    <label class="checkbox-item"><input type="checkbox" id="ostKyuyoNoB" onchange="calc()"> オフィスST 給与（A契約なし）400円/名</label>
+    <label class="checkbox-item"><input type="checkbox" id="ostWeb" onchange="calc()"> オフィスST Web給与明細 50円/名</label>
+    <label class="checkbox-item"><input type="checkbox" id="ostWebKintaiSet" onchange="calc()"> Web給与明細＋勤怠のセット利用 300円/名</label>
+    <label class="checkbox-item"><input type="checkbox" id="ostKintai" onchange="calc()"> オフィスST 勤怠 300円/名</label>
+    <label class="checkbox-item"><input type="checkbox" id="ostSupport" onchange="calc()"> オフィスST 操作問い合わせ 5,000円/社</label>
+    <label class="checkbox-item"><input type="checkbox" id="romuSapuri" onchange="calc()"> 労務サプリ 2,000円/社</label>
+    <label class="checkbox-item"><input type="checkbox" id="kitera" onchange="calc()"> Kitera使用料 5,000円</label>
+    <label class="checkbox-item"><input type="checkbox" id="ostPaidLeave" onchange="calc()"> オフィスST 有給休暇 100円/名</label>
+    <label class="checkbox-item"><input type="checkbox" id="ostYearEnd" onchange="calc()"> オフィスST 年末調整（年額）500円/名</label>
+    <label class="checkbox-item"><input type="checkbox" id="yearEndDial" onchange="calc()"> 年末調整 従業員専用ダイヤル（年額）100円/名</label>
+  </div>
+</div>
+
+<!-- 計算結果 -->
+<div class="card">
+  <h2>料金計算結果</h2>
+  <table class="result-table" id="resultTable">
+    <thead>
+      <tr><th>項目</th><th class="amount">月額（税抜）</th></tr>
+    </thead>
+    <tbody id="resultBody">
+      <tr><td colspan="2" style="text-align:center;color:#999;padding:20px;">サービスを選択してください</td></tr>
+    </tbody>
+  </table>
+  <div class="notice" style="margin-top:12px;">
+    ※源泉所得税は社労士報酬（消費税抜き）に対して課税されます<br>
+    ※口座振替はサービス提供の翌月22日（休日の場合は後日）
+  </div>
+</div>
+
+
+<!-- PDF出力 -->
+<div class="card">
+  <h2>PDF出力</h2>
+  <div class="btn-group">
+    <button class="btn btn-primary" onclick="printEstimate()">📄 見積書を印刷/PDF保存</button>
+    <button class="btn btn-green" onclick="printContract()">📝 契約書を印刷/PDF保存</button>
+    <button class="btn btn-blue" onclick="printDetail()">📊 料金計算明細を印刷/PDF保存</button>
+    <button class="btn btn-orange" onclick="printFeeTable()">💰 手続き料金表を印刷/PDF保存</button>
+  </div>
+  <div class="notice" style="margin-top:12px;">
+    ※印刷ダイアログで「PDFに保存」を選択してください<br>
+    ※契約書は契約内容に応じて自動的に選択されます
+  </div>
+</div>
+
+<!-- スポット手続き見積・請求 -->
+<div class="card">
+  <h2>スポット手続き見積・請求</h2>
+  <div class="notice">手続き料金表をもとに、スポット用の見積書・請求書を作成します。対象年月は書類全体で共通です。複数手続きをチェックしてまとめて明細に追加できます。</div>
+  <div class="form-row triple" style="margin-top:12px;">
+    <div>
+      <label>対象区分</label>
+      <select id="spotCustomerType" onchange="renderSpotProcedureChecklist(); calcSpot()">
+        <option value="customer">顧問先（継続契約あり）</option>
+        <option value="spot">顧問先以外（スポット価格）</option>
+      </select>
+    </div>
+    <div>
+      <label>対象年月</label>
+      <input type="text" id="spotTargetMonth" placeholder="例：2026/7">
+    </div>
+    <div>
+      <label>源泉所得税</label>
+      <select id="spotWithholding" onchange="calcSpot()">
+        <option value="yes">差し引く</option>
+        <option value="no">差し引かない</option>
+      </select>
+    </div>
+  </div>
+  <div class="form-row">
+    <div>
+      <label>割引名</label>
+      <input type="text" id="spotDiscountLabel" placeholder="例：〇〇様ご紹介割引" onchange="calcSpot()">
+    </div>
+    <div>
+      <label>割引額（税抜）</label>
+      <input type="number" id="spotDiscountAmount" min="0" value="0" onchange="calcSpot()">
+    </div>
+  </div>
+  <div class="notice" style="margin-top:8px;">見積有効期限：発行日から10日後 ／ 請求支払期限：発行日から20日後</div>
+  <div class="section-title">手続き選択</div>
+  <div id="spotProcedureChecklist" style="max-height:260px; overflow:auto; border:1px solid #E0E6ED; border-radius:6px; padding:10px; background:#FAFBFC;"></div>
+  <div class="section-title">一覧外の手続き</div>
+  <div class="form-row triple">
+    <div>
+      <label>手続き名</label>
+      <input type="text" id="spotManualName" placeholder="例：個別相談対応">
+    </div>
+    <div>
+      <label>単価（税抜）</label>
+      <input type="number" id="spotManualUnit" min="0" value="0">
+    </div>
+    <div>
+      <label>数量</label>
+      <input type="number" id="spotManualQty" min="1" value="1">
+    </div>
+  </div>
+  <div class="btn-group" style="margin-top:8px;">
+    <button class="btn btn-blue" onclick="addManualSpotItem()">＋ 手入力明細を追加</button>
+    <button class="btn btn-blue" onclick="addSelectedSpotItems()">＋ 選択した手続きを明細に追加</button>
+    <button class="btn btn-orange" onclick="applySpotCustomerTypeToItems()">追加済み明細の単価を対象区分に反映</button>
+    <button class="btn" style="background:#7B8794;color:white;" onclick="clearSpotItems()">明細クリア</button>
+  </div>
+  <table class="result-table" style="margin-top:8px;">
+    <thead><tr><th>明細</th><th class="amount">金額</th><th style="width:96px;">操作</th></tr></thead>
+    <tbody id="spotResultBody">
+      <tr><td colspan="3" style="text-align:center;color:#999;padding:20px;">手続きを選択してください</td></tr>
+    </tbody>
+  </table>
+  <div class="btn-group">
+    <button class="btn btn-primary" onclick="printSpotEstimate()">📄 スポット見積書を印刷/PDF保存</button>
+    <button class="btn btn-green" onclick="printSpotInvoice()">🧾 スポット請求書を印刷/PDF保存</button>
+  </div>
+</div>
+
+</div>
+
+<!-- 印刷用コンテンツ（非表示） -->
+<div id="printContent" style="display:none;"></div>
+
+<script>
+// ========== 料金計算 ==========
+function getEmpCount() { return parseInt(document.getElementById('empCount').value) || 0; }
+function getEmpCountC() { return parseInt(document.getElementById('empCountC').value) || 0; }
+
+// 段階的単価計算（労務・給与共通）
+function calcStepPrice(emp, rates) {
+  // rates: [{max, price}, ...] maxがnullなら上限なし
+  let total = 0;
+  let remaining = emp;
+  let prev = 0;
+  for (const r of rates) {
+    if (remaining <= 0) break;
+    const count = r.max ? Math.min(remaining, r.max - prev) : remaining;
+    total += count * r.price;
+    remaining -= count;
+    if (r.max) prev = r.max;
+  }
+  return total;
+}
+
+const ROMU_RATES = [
+  {max: 20,  price: 400},
+  {max: 50,  price: 300},
+  {max: 100, price: 200},
+  {max: 300, price: 150},
+  {max: null,price: 100},
+];
+const KYUYO_RATES = [
+  {max: 20,  price: 1300},
+  {max: 50,  price: 1100},
+  {max: 100, price:  900},
+  {max: 300, price:  700},
+  {max: null,price:  500},
+];
+const SHOGUU_RATES = [
+  {max: 20,  price: 300},
+  {max: 50,  price: 250},
+  {max: 100, price: 200},
+  {max: 300, price: 150},
+  {max: null,price: 100},
+];
+const SHOGUU_RATES_B = [
+  {max: null, price: 50},
+];
+const SHOGUU_RATES_CONSULTATION = [
+  {max: null, price: 100},
+];
+function getShoguuRateType(hasB) {
+  return hasB ? 'withB' : document.getElementById('serviceCType').value;
+}
+function calcShoguuEmployeePrice(empC, hasB) {
+  const type = getShoguuRateType(hasB);
+  if (type === 'withB') return calcStepPrice(empC, SHOGUU_RATES_B);
+  if (type === 'consultation') return calcStepPrice(empC, SHOGUU_RATES_CONSULTATION);
+  return calcStepPrice(empC, SHOGUU_RATES);
+}
+function getShoguuRateLabel(hasB) {
+  const type = getShoguuRateType(hasB);
+  if (type === 'withB') return '給与計算委託あり・50円/名';
+  if (type === 'consultation') return '相談のみ・100円/名';
+  return '段階計算';
+}
+
+function formatYen(n) { return n.toLocaleString('ja-JP') + '円'; }
+
+let calcResult = {};
+
+function calc() {
+  const emp = getEmpCount();
+  const hasA = document.getElementById('serviceA').checked;
+  const hasB = document.getElementById('serviceB').checked;
+  const hasC = document.getElementById('serviceC').checked;
+
+  // C オプション表示切替
+  document.getElementById('serviceCOptions').style.display = hasC ? 'block' : 'none';
+
+  const items = [];
+  let subtotal = 0;
+
+  // A 労務サポート
+  if (hasA) {
+    const base = 15000;
+    const empPrice = calcStepPrice(emp, ROMU_RATES);
+    items.push({label: 'A. 労務サポート基本料', amount: base});
+    items.push({label: `　従業員数単価（${emp}名・段階計算）`, amount: empPrice});
+    subtotal += base + empPrice;
+  }
+
+  // B 給与計算
+  if (hasB) {
+    const empPrice = calcStepPrice(emp, KYUYO_RATES);
+    items.push({label: `B. 給与計算サポート（${emp}名・段階計算）`, amount: empPrice});
+    subtotal += empPrice;
+  }
+
+  // C 処遇改善加算
+  if (hasC) {
+    const empC = getEmpCountC();
+    const cBase1 = hasA ? 5000 : 15000;
+    const cBase2 = 10000;
+    const empPrice = calcShoguuEmployeePrice(empC, hasB);
+    const cLabel = hasA ? 'Aの契約あり 5,000円' : 'Aの契約なし 15,000円';
+    items.push({label: `C. 処遇改善加算基本料（${cLabel}）`, amount: cBase1});
+    items.push({label: '　集計・根拠資料作成料', amount: cBase2});
+    items.push({label: `　従業員数単価（${empC}名・${getShoguuRateLabel(hasB)}）`, amount: empPrice});
+    subtotal += cBase1 + cBase2 + empPrice;
+  }
+
+  // オフィスST
+  const ostItems = [
+    {id: 'ostMyNumber1', label: 'オフィスST マイナンバープラス（顧問先入力）', price: 100, unit: 'person'},
+    {id: 'ostMyNumber2', label: 'オフィスST マイナンバープラス（事務所入力）', price: 200, unit: 'person'},
+    {id: 'ostRomu',      label: 'オフィスST 労務（A契約あり想定）', price: 200, unit: 'person'},
+    {id: 'ostRomuNoA',   label: 'オフィスST 労務（A契約なし）', price: 400, unit: 'person'},
+    {id: 'ostKyuyo',     label: 'オフィスST 給与（A契約あり想定）', price: 200, unit: 'person'},
+    {id: 'ostKyuyoNoB',  label: 'オフィスST 給与（A契約なし）', price: 400, unit: 'person'},
+    {id: 'ostWeb',       label: 'オフィスST Web給与明細', price: 50, unit: 'person'},
+    {id: 'ostWebKintaiSet', label: 'Web給与明細＋勤怠のセット利用', price: 300, unit: 'person'},
+    {id: 'ostKintai',    label: 'オフィスST 勤怠', price: 300, unit: 'person'},
+    {id: 'ostSupport',   label: 'オフィスST 操作問い合わせ', price: 5000, unit: 'company'},
+    {id: 'romuSapuri',   label: '労務サプリ', price: 2000, unit: 'company'},
+    {id: 'kitera',       label: 'Kitera使用料', price: 5000, unit: 'company'},
+    {id: 'ostPaidLeave', label: 'オフィスST 有給休暇', price: 100, unit: 'person'},
+    {id: 'ostYearEnd',   label: 'オフィスST 年末調整（年額）', price: 500, unit: 'person'},
+    {id: 'yearEndDial',  label: '年末調整 従業員専用ダイヤル（年額）', price: 100, unit: 'person'},
+  ];
+  ostItems.forEach(o => {
+    const elem = document.getElementById(o.id);
+    if (elem && elem.checked) {
+      const count = o.unit === 'company' ? 1 : emp;
+      const amt = count * o.price;
+      const label = o.unit === 'company'
+        ? `${o.label}（1社×${o.price.toLocaleString()}円）`
+        : `${o.label}（${emp}名×${o.price.toLocaleString()}円）`;
+      items.push({label, amount: amt});
+      subtotal += amt;
+    }
+  });
+
+  // 税計算
+  const tax = Math.floor(subtotal * 0.1);
+  let gensen;
+  if (subtotal <= 1000000) {
+    gensen = Math.floor(subtotal * 0.1021);
+  } else {
+    gensen = Math.floor((subtotal - 1000000) * 0.2042) + 102100;
+  }
+  const total = subtotal + tax - gensen;
+
+  // 結果テーブル更新
+  const tbody = document.getElementById('resultBody');
+  if (items.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="2" style="text-align:center;color:#999;padding:20px;">サービスを選択してください</td></tr>';
+    calcResult = {};
+    return;
+  }
+
+  let html = items.map(i =>
+    `<tr><td>${i.label}</td><td class="amount">${formatYen(i.amount)}</td></tr>`
+  ).join('');
+  html += `<tr class="tax-row"><td>小計（税抜）</td><td class="amount">${formatYen(subtotal)}</td></tr>`;
+  html += `<tr class="tax-row"><td>消費税（10%）</td><td class="amount">${formatYen(tax)}</td></tr>`;
+  html += `<tr class="tax-row"><td>源泉所得税（${subtotal <= 1000000 ? '10.21%' : '超過額×20.42%＋102,100'}）</td><td class="amount">△${formatYen(gensen)}</td></tr>`;
+  html += `<tr class="total-row"><td>合計（月額）</td><td class="amount">${formatYen(total)}</td></tr>`;
+  tbody.innerHTML = html;
+
+  calcResult = { items, subtotal, tax, gensen, total, emp,
+    hasA, hasB, hasC,
+    empC: getEmpCountC(),
+    serviceCType: hasC ? getShoguuRateType(hasB) : '',
+    clientName: document.getElementById('clientName').value,
+    clientPostalCode: document.getElementById('clientPostalCode').value,
+    clientAddress: document.getElementById('clientAddress').value,
+    contractStart: document.getElementById('contractStart').value,
+    contractEnd: document.getElementById('contractEnd').value,
+  };
+}
+
+// ========== 日付フォーマット ==========
+function toWareki(dateStr) {
+  if (!dateStr) return '　　　　年　　月　　日';
+  const s = String(dateStr).trim();
+  const m = s.match(/^(\d{4})[\/\-.年](\d{1,2})(?:[\/\-.月](\d{1,2}))?/);
+  if (m) {
+    const day = m[3] ? parseInt(m[3], 10) : 1;
+    return parseInt(m[1], 10) + '年' + parseInt(m[2], 10) + '月' + day + '日';
+  }
+  const d = new Date(s);
+  if (Number.isNaN(d.getTime())) return s;
+  return d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日';
+}
+function formatYearMonth(value) {
+  if (!value) return '';
+  const s = String(value).trim();
+  let m = s.match(/^(\d{4})[\/\-.年](\d{1,2})/);
+  if (m) return parseInt(m[1], 10) + '年' + parseInt(m[2], 10) + '月';
+  const d = new Date(s);
+  if (!Number.isNaN(d.getTime())) return d.getFullYear() + '年' + (d.getMonth() + 1) + '月';
+  return s;
+}
+
+// ========== 印刷共通 ==========
+function printHTML(html, title = '見積書・契約書') {
+  const w = window.open('', '_blank');
+  w.document.write(`<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8">
+  <title>${title}</title>
+  <style>
+    body { font-family: 'Yu Gothic', 'Meiryo', 'Yu Mincho', serif; margin: 0; padding: 0; font-size: 10.5pt; line-height: 1.7; color: #1F2933; background: #fff; }
+    @page { size: A4; margin: 18mm 14mm; }
+    @media print { body { print-color-adjust: exact; -webkit-print-color-adjust: exact; } }
+    table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; page-break-inside: auto; }
+    tr { page-break-inside: avoid; page-break-after: auto; }
+    th, td { border: 1px solid #9AA5B1; padding: 7px 9px; vertical-align: top; }
+    th { background: #243B53; color: #fff; font-weight: bold; }
+    tr:nth-child(even) td { background: #F8FAFC; }
+    .center { text-align: center; }
+    .right { text-align: right; white-space: nowrap; }
+    .bold { font-weight: bold; }
+    .title { font-size: 20pt; font-weight: bold; text-align: center; margin: 2px 0 20px; color: #102A43; letter-spacing: 0.04em; }
+    .subtitle { font-size: 11pt; text-align: center; margin-bottom: 18px; color: #52606D; }
+    .info-table { border: none; margin-bottom: 18px; }
+    .info-table td { border: none; padding: 3px 8px; background: #fff !important; }
+    .section { margin: 18px 0 8px; padding: 6px 8px; font-weight: bold; color: #102A43; background: #EAF2F8; border-left: 5px solid #2E4057; border-bottom: none; page-break-after: avoid; }
+    .total-row td { background: #FFF4CC !important; font-weight: bold; font-size: 11.5pt; }
+    .discount-row td { background: #FDEBEC !important; color: #9B1C1C; font-weight: bold; }
+    .footer { margin-top: 32px; }
+    .signature-section { page-break-inside: avoid; break-inside: avoid; margin-top: 28px; }
+    .sign-table { width: 68%; margin-left: auto; border-collapse: collapse; page-break-inside: avoid; break-inside: avoid; }
+    .sign-table td { border: 1px solid #52606D; padding: 18px 14px; background: #fff !important; }
+    .no-print { display: none; }
+    .page-break { break-before: page; page-break-before: always; height: 0; }
+    h2 { font-size: 14pt; color: #102A43; }
+    p { margin: 6px 0; }
+    strong { color: #102A43; }
+    .doc-header { width:100%; border-collapse:separate; border-spacing:0; margin: 4px 0 18px; }
+    .doc-header td { border:none; background:#fff !important; padding:0; vertical-align:top; }
+    .doc-client { width:52%; padding-right:18px !important; }
+    .doc-office { width:48%; text-align:right; font-size:9.4pt; line-height:1.55; color:#334E68; }
+    .doc-lead { margin-top:18px; font-size:10.5pt; font-weight:normal; color:#334E68; }
+    .amount-box { display:inline-block; min-width:250px; margin-top:14px; padding:0 0 4px; background:transparent; }
+    .amount-label { display:block; font-size:12.5pt; color:#102A43; font-weight:bold; letter-spacing:0.04em; margin-bottom:2px; }
+    .amount-value { display:inline-block; font-size:22pt; line-height:1.1; color:#102A43; font-weight:bold; letter-spacing:0.02em; border-bottom:2px solid #102A43; padding-bottom:2px; }
+    .doc-note { display:block; margin-top:9px; font-size:9.5pt; color:#52606D; line-height:1.5; }
+    .doc-detail-table { margin-top: 18px; }
+  </style>
+  </head><body>
+  ${html}
+  <script>setTimeout(()=>window.print(),800);<\/script>
+  </body></html>`);
+  w.document.close();
+}
+
+
+function safeFileNamePart(value) {
+  return (value || '').replace(/[\\/:*?"<>|]/g, '').trim();
+}
+function buildPrintTitle(kind, clientName, includeClient = true) {
+  const date = new Date();
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  const office = '社会保険労務士齊藤事務所';
+  if (!includeClient) return office + '_' + kind + '_' + y + m + d;
+  const client = safeFileNamePart(clientName) || '顧問先未入力';
+  return office + '_' + kind + '_' + client + '様_' + y + m + d;
+}
+// ========== 見積書 ==========
+function printEstimate() {
+  if (!calcResult.items) { alert('サービスを選択してください'); return; }
+  const r = calcResult;
+  const today = new Date();
+  const expiry = new Date(today); expiry.setDate(expiry.getDate() + 10);
+  const fmt = d => `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
+  const toW = dateStr => {
+    if (!dateStr) return '　　　年　　月　　日';
+    const d = new Date(dateStr);
+    return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
+  };
+
+  let rows = r.items.map(i =>
+    `<tr><td>${i.label}</td><td class="right">${i.amount.toLocaleString()}円</td></tr>`
+  ).join('');
+
+  const html = `
+  <div class="title">お 見 積 書</div>
+  <table class="info-table" style="margin-bottom:16px;">
+    <tr><td style="font-size:13pt; font-weight:bold; width:60%;">${r.clientName || '　　　　　　　　　　　　'} 御中</td>
+        <td style="text-align:right;">
+          発行日：${fmt(today)}<br>
+          有効期限：${fmt(expiry)}<br>
+          社会保険労務士齊藤事務所<br>
+          <span style="white-space:nowrap; font-size:9.5pt;">〒174-0072 東京都板橋区南常盤台1-22-7-402</span><br>
+          TEL：03-6325-1208<br>
+          登録番号：T5810608915535
+        </td>
+    </tr>
+  </table>
+  <div style="text-align:center; margin:16px 0; font-size:12pt;">
+    下記のとおりお見積りいたします。
+  </div>
+  <table style="margin-bottom:4px;">
+    <tr style="background:#2E4057; color:white;"><th>サービス内容</th><th style="width:150px;" class="right">月額（税抜）</th></tr>
+    ${rows}
+    <tr><td class="right bold">小計（税抜）</td><td class="right bold">${r.subtotal.toLocaleString()}円</td></tr>
+    <tr><td class="right">消費税（10%）</td><td class="right">${r.tax.toLocaleString()}円</td></tr>
+    <tr><td class="right">源泉所得税</td><td class="right">△${r.gensen.toLocaleString()}円</td></tr>
+    <tr class="total-row"><td class="right bold">金額(月次報酬)</td><td class="right bold">${r.total.toLocaleString()}円</td></tr>
+  </table>
+  <div style="font-size:9pt; color:#555; margin-top:6px;">
+    ※表示額は月額です。口座振替はサービス提供翌月22日（休日の場合は後日）<br>
+    ※手続き費用は別途手続き料金表に基づきご請求いたします
+  </div>`;
+
+  printHTML(html, buildPrintTitle('お見積書(月次報酬)', r.clientName));
+}
+
+// ========== 料金計算明細 ==========
+function printDetail() {
+  if (!calcResult.items) { alert('サービスを選択してください'); return; }
+  const r = calcResult;
+  const fmt = d => `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
+
+  let rows = r.items.map(i =>
+    `<tr><td>${i.label}</td><td class="right">${i.amount.toLocaleString()}円</td></tr>`
+  ).join('');
+
+  const html = `
+  <div class="title">料 金 計 算 明 細</div>
+  <table class="info-table" style="margin-bottom:16px;">
+    <tr>
+      <td><strong>顧問先名：</strong>${r.clientName || '　'}</td>
+      <td class="right">作成日：${fmt(new Date())}</td>
+    </tr>
+    <tr><td><strong>従業員数：</strong>${r.emp}名</td><td></td></tr>
+  </table>
+  <table>
+    <tr style="background:#2E4057; color:white;"><th>項目</th><th style="width:150px;" class="right">金額（税抜）</th></tr>
+    ${rows}
+    <tr><td class="right bold">小計（税抜）</td><td class="right bold">${r.subtotal.toLocaleString()}円</td></tr>
+    <tr><td class="right">消費税（10%）</td><td class="right">${r.tax.toLocaleString()}円</td></tr>
+    <tr><td class="right">源泉所得税（${r.subtotal <= 1000000 ? '10.21%' : '超過額×20.42%＋102,100円'}）</td><td class="right">△${r.gensen.toLocaleString()}円</td></tr>
+    <tr class="total-row"><td class="right bold">お振替月額（税込）</td><td class="right bold">${r.total.toLocaleString()}円</td></tr>
+  </table>`;
+
+  printHTML(html, buildPrintTitle('料金計算明細', r.clientName));
+}
+
+// ========== 契約書 ==========
+function getContractType() {
+  const r = calcResult;
+  if (r.hasA && r.hasB && r.hasC) return 5;
+  if (r.hasA && r.hasC) return 4;
+  if (r.hasA && r.hasB) return 2;
+  if (r.hasC && !r.hasA) return 3;
+  if (r.hasA) return 1;
+  return 0;
+}
+
+function getContractTypeName(t) {
+  const names = {1:'労務サポート', 2:'労務＋給与計算サポート', 3:'処遇改善加算サポート', 4:'労務＋処遇改善加算サポート', 5:'労務＋給与計算＋処遇改善加算サポート'};
+  return names[t] || '未選択';
+}
+
+function printContract() {
+  if (!calcResult.items) { alert('サービスを選択してください'); return; }
+  const r = calcResult;
+  const t = getContractType();
+  if (t === 0) { alert('契約書を生成できる契約内容を選択してください'); return; }
+
+  const toW = dateStr => {
+    if (!dateStr) return '　　　　年　　月　　日';
+    const d = new Date(dateStr);
+    return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
+  };
+
+  // 契約種別に応じた契約内容
+  const contractContents = {
+    1: getContract1(r, toW),
+    2: getContract2(r, toW),
+    3: getContract3(r, toW),
+    4: getContract4(r, toW),
+    5: getContract5(r, toW),
+  };
+
+  printHTML(contractContents[t], buildPrintTitle('業務委託契約書', r.clientName));
+}
+
+function commonClauses(includeA, includeB, includeC) {
+  let articleNum = 0;
+  const next = () => ++articleNum;
+  let html = '';
+
+  // 契約期間
+  html += `<div class="section">${next()}．契約期間</div>
+  <p>　　　　年　　月　　日 ～ 　　　　年　　月　　日</p>
+  <p>※期間終了日の２ヶ月前までに解約の意思表示がない場合は自動更新といたします。</p>`;
+
+  // 中途解約
+  html += `<div class="section">${next()}．中途解約</div>
+  <p>本契約の当事者は、本契約の有効期間であっても、解約日の２か月前までに相手方に対する書面又は電磁的方法による通知により、本契約の全部又は一部を解約することができます。</p>`;
+
+  return {html, next};
+}
+
+function signatureBlock(clientName, startDate, toW) {
+  const r = calcResult || {};
+  const postal = r.clientPostalCode ? '〒' + r.clientPostalCode : '〒　　　　　　　　　';
+  const address = r.clientAddress || '　　　　　　　　　　　　　　　　';
+  const name = clientName || '　　　　　　　　　　　　　　　　';
+  return `
+  <div class="footer signature-section">
+    <p>以上、契約成立の証として、本契約書はオフィスステーションサインによる電子署名により締結します。</p>
+    <p style="margin-top:16px;">${toW(startDate)}</p>
+    <table class="sign-table" style="margin-top:24px;">
+      <tr><td><strong>（甲）</strong><br><br>住所　${postal}<br>　　　${address}<br><br>社名　${name}<br><br>代表者</td></tr>
+      <tr><td><strong>（乙）</strong><br><br>住所　〒174-0072<br>　　　東京都板橋区南常盤台1-22-7-402<br><br>社名　社会保険労務士齊藤事務所<br><br>代表者　齊藤 広幸</td></tr>
+    </table>
+  </div>`;
+}
+
+function commonLegalClauses(startArticle) {
+  let n = startArticle;
+  return `
+  <div class="section">${n++}．費用</div>
+  <p>本業務に関連して乙が負担した諸費用（交通費・通信費・宿泊費・資料費用等を含むがこれらに限られない。）については、乙の負担とします。</p>
+  <div class="section">${n++}．支払の時期及び方法</div>
+  <p>本契約に基づく報酬は甲の指定する口座よりお振替となります。口座振替は日本システム収納株式会社に代行を委託しております。口座振替はサービス提供の翌月２２日（休日の場合は後日）となります。登録まで１か月程度かかるため、最初のお振替は２か月分まとめてのお振替となる場合があります。お振替明細書は日本システム収納株式会社よりハガキをお送りしております。</p>
+  <div class="section">${n++}．特定個人情報の利用目的</div>
+  <p>乙は、甲の委託に基づき、次の利用目的のため、甲から、個人番号を含む個人情報（以下「特定個人情報」という。）の提供を受け、個人番号関係事務を取扱い及び本件業務を遂行するものとします。<br>（利用目的）雇用保険、健康保険・厚生年金保険被保険者資格取得届等の書類に記載して、公共職業安定所、日本年金機構及び健康保険組合等に提出すること</p>
+  <div class="section">${n++}．特定個人情報の利用制限</div>
+  <p>乙は、甲から提供を受けた特定個人情報を、委託を受けた範囲でのみ使用するものとし、本契約で定めた利用目的以外には利用せず、第三者に提供しないことを約束します。</p>
+  <div class="section">${n++}．特定個人情報の安全管理措置等</div>
+  <p>乙は甲から提供を受けた特定個人情報については安全管理措置を講じたうえで適切に取り扱うものとします。</p>
+  <div class="section">${n++}．守秘義務</div>
+  <p>乙は、社会保険労務士法第21条（秘密を守る義務）、第27条の２（使用人等の秘密を守る義務）に基づき、業務上入手した甲及び甲の従業員に関する情報に関し、本契約終了後も第三者（家族、知人を含む。）に漏洩してはなりません。</p>
+  <div class="section">${n++}．個人情報及び特定個人情報の保護</div>
+  <p>乙が業務の遂行に際して甲及びその関係者の個人情報及び特定個人情報を取り扱う場合、乙は特定個人情報等を機密として保持し、第三者に開示・遺漏し、及び委託業務以外の目的で利用してはならず、また、乙は、個人情報の紛失・破壊・改ざん等の防止に必要な安全管理措置を講じます。</p>
+  <div class="section">${n++}．反社会的勢力の排除</div>
+  <p>甲及び乙は、自己または自己の役員が、暴力団、暴力団員等の反社会的勢力に該当しないことを、現在及び将来にわたって表明し確約します。</p>
+  <div class="section">${n++}．損害賠償</div>
+  <p>本契約に違反した当事者は、当該違反に起因又は関連して相手方が被った損害を賠償するものとします。</p>
+  <div class="section">${n++}．合意管轄</div>
+  <p>本契約に関する訴訟については、その訴額に応じて東京地方裁判所又は東京簡易裁判所を第一審の専属定合意管轄裁判所とします。</p>`;
+}
+
+function laborClauseHtml(articleNo) {
+  return [
+    '<div class="section">' + articleNo + '．労務サポート契約</div>',
+    '<p><strong>【労務サポート契約の業務範囲】</strong></p>',
+    '<p>（１）労働保険、社会保険、労務関係に関するご相談、質疑応答<br>（２）人事労務関係書類のひな型のご提供（労働条件通知書など）<br>（３）就業規則、社内規程の運用に関するご相談（作成や改訂のご依頼は別途お見積りとなります）<br>（４）労務関係の情報提供（情報提供ツールからメール配信）<br>（５）労働局、労働基準監督署、ハローワーク、年金事務所へ行う手続き</p>',
+    '<p><strong>【労務サポート契約の確認事項】</strong></p>',
+    '<p>・上記１-（５）の手続きは、手続き料金表に基づき別途ご請求となります<br>・従業員情報等の共有はオフィスステーションをご使用いただきます<br>・台帳登録を甲で行う場合１名あたり110円(税込み)<br>・台帳登録を乙で行う場合１名あたり220円(税込み)<br>・社会保険労務士の範囲外に関することは他士業等をご紹介いたしますのでご相談ください</p>'
+  ].join('');
+}
+
+function payrollClauseHtml(articleNo) {
+  return [
+    '<div class="section">' + articleNo + '．給与計算サポート契約</div>',
+    '<p><strong>【給与計算サポート契約の業務範囲】</strong></p>',
+    '<p>（１）月次給与の支給額、控除額の計算<br>（２）給与明細書、支給控除一覧表の作成<br>（３）賞与の支給額、控除額の計算（別途費用を頂戴いたします）</p>',
+    '<p><strong>【給与計算サポート契約の確認事項】</strong></p>',
+    '<p>・支給控除一覧表、振込額一覧表のPDFデータをご納品いたします<br>・原則としてweb給与明細をご使用いただきます(１名あたり55円(税込み))<br>・紙の給与明細書をご希望の場合は別途費用を頂戴いたします(１名あたり330円(税込み))<br>・勤怠システムを使用されない場合は乙の指定するExcelに甲にてご入力いただきます<br>・勤怠システムのご案内ができますのでご相談ください<br>・甲は給与計算に必要な情報を給与支給日の12日前までに乙へ提供します<br>・年末調整に関する業務、退職者の源泉徴収票の発行はサポート対象外となります<br>・住民税の特別徴収、普通徴収切替の届出はサポート対象外となります</p>'
+  ].join('');
+}
+
+function treatmentClauseHtml(articleNo) {
+  return [
+    '<div class="section">' + articleNo + '．処遇改善加算サポート契約</div>',
+    '<p><strong>【処遇改善加算サポート契約の業務範囲】</strong></p>',
+    '<p>（１）処遇改善加算に関する相談、助言、質疑応答<br>（２）処遇改善計画書及び実績報告書の作成サポート（別途課金があります）<br>（３）上記（２）に関する行政機関からの問い合わせ対応<br>（４）上記（２）の作成に必要な情報の集計作業及び根拠資料の作成<br>（５）年度途中に新規事業所を追加で申請する場合の計画書の作成サポート<br>（６）年度途中で区分変更を行う場合の計画書の作成サポート</p>',
+    '<p><strong>【処遇改善加算サポート契約の確認事項】</strong></p>',
+    '<p>・処遇改善計画書の作成月（２月）、実績報告書の作成月（７月）は、報酬額の合計１か月相当額を別途課金させていただきます。介護保険、障害福祉の両方の申請がある場合は1.5か月相当額の課金となります。<br>・キャリアパス要件の作成、見直しは別途お見積りさせていただきます。<br>・指定権者への提出は甲にて行っていただきます。<br>・書類作成のサポートは計画書、実績報告書に限ります。<br>・加算届、体制状況一覧などはサポート対象外となります。</p>'
+  ].join('');
+}
+
+function contractPeriodHtml(articleNo, r, toW) {
+  return '<div class="section">' + articleNo + '．契約期間</div>' +
+    '<p>' + toW(r.contractStart) + ' ～ ' + toW(r.contractEnd) + '</p>' +
+    '<p>※期間終了日の２ヶ月前までに解約の意思表示がない場合は自動更新といたします。</p>';
+}
+
+function cancellationHtml(articleNo) {
+  return '<div class="section">' + articleNo + '．中途解約</div>' +
+    '<p>本契約の当事者は、本契約の有効期間であっても、解約日の２か月前までに相手方に対する書面又は電磁的方法による通知により、本契約の全部又は一部を解約することができます。</p>';
+}
+
+function commonConfirmationHtml(articleNo) {
+  return '<div class="section">' + articleNo + '．共通確認事項</div>' +
+    '<p>・甲は乙の処理に必要な資料について、真正のものを適時提供します<br>' +
+    '・甲は乙の処理に必要な情報提供が２ヶ月以上滞らないよう情報提供します<br>' +
+    '・乙は法令に基づいて正しく業務を行い、また、乙は諸法令を遵守します<br>' +
+    '・乙の営業時間は平日９時～１７時となります。<br>' +
+    '・乙は業務上知り得た甲の秘密等を他に漏らしません</p>';
+}
+
+function getContract1(r, toW) {
+  const emp = r.emp;
+  const empPrice = calcStepPrice(emp, ROMU_RATES);
+  const totalA = 15000 + empPrice;
+  return [
+    '<div class="title">業 務 委 託 契 約 書</div>',
+    '<p style="margin-bottom:16px;">' + (r.clientName || '　　　　　　　　　　　　') + '（以下、甲という）は、社会保険労務士齊藤事務所（以下、乙という）に対し、以下の事項を承認の上、業務委託契約を締結します。</p>',
+    laborClauseHtml(1),
+    commonConfirmationHtml(2),
+    contractPeriodHtml(3, r, toW),
+    cancellationHtml(4),
+    '<div class="section">5．報酬額 ※表示額は税抜きです。</div>',
+    '<table><tr><td>労務サポート契約基本料</td><td class="right">月額 15,000円</td></tr><tr><td>従業員数（月次サービス一覧A参照）' + emp + '名</td><td class="right">月額 ' + empPrice.toLocaleString() + '円</td></tr><tr class="total-row"><td class="bold">合計</td><td class="right bold">月額 ' + totalA.toLocaleString() + '円</td></tr></table>',
+    '<p style="font-size:9pt; margin-top:6px;">※対象従業員数は労働保険年度更新、算定基礎届の対象人数に基づき、毎年８月１日から７月３１日まで適用となります。</p>',
+    commonLegalClauses(7),
+    signatureBlock(r.clientName, r.contractStart, toW)
+  ].join('');
+}
+
+function getContract2(r, toW) {
+  const emp = r.emp;
+  const empPriceA = calcStepPrice(emp, ROMU_RATES);
+  const empPriceB = calcStepPrice(emp, KYUYO_RATES);
+  const totalA = 15000 + empPriceA;
+  return [
+    '<div class="title">業 務 委 託 契 約 書</div>',
+    '<p style="margin-bottom:16px;">' + (r.clientName || '　　　　　　　　　　　　') + '（以下、甲という）は、社会保険労務士齊藤事務所（以下、乙という）に対し、以下の事項を承認の上、業務委託契約を締結します。</p>',
+    laborClauseHtml(1),
+    payrollClauseHtml(2),
+    commonConfirmationHtml(3),
+    contractPeriodHtml(4, r, toW),
+    cancellationHtml(5),
+    '<div class="section">7．報酬額 ※表示額は税抜きです。</div>',
+    '<p><strong>【労務サポート契約の報酬額】</strong></p>',
+    '<table><tr><td>労務サポート契約基本料</td><td class="right">月額 15,000円</td></tr><tr><td>従業員数（月次サービス一覧A参照）' + emp + '名</td><td class="right">月額 ' + empPriceA.toLocaleString() + '円</td></tr><tr class="total-row"><td class="bold">合計</td><td class="right bold">月額 ' + totalA.toLocaleString() + '円</td></tr></table>',
+    '<p style="font-size:9pt; margin-top:6px;">※対象従業員数は労働保険年度更新、算定基礎届の対象人数に基づき、毎年８月１日から７月３１日まで適用となります。</p>',
+    '<p style="margin-top:12px;"><strong>【給与計算サポート契約の報酬額】</strong></p>',
+    '<table><tr class="total-row"><td class="bold">給与計算人数（月次サービス一覧B参照）' + emp + '名</td><td class="right bold">月額 ' + empPriceB.toLocaleString() + '円</td></tr></table>',
+    '<p style="font-size:9pt; margin-top:6px;">※給与計算を行った人数により報酬額を決定いたしますので、従業員の入退職により変動します。</p>',
+    commonLegalClauses(7),
+    signatureBlock(r.clientName, r.contractStart, toW)
+  ].join('');
+}
+
+function getContract3(r, toW) {
+  const emp = r.empC;
+  const cBase1 = 15000;
+  const cBase2 = 10000;
+  const empPrice = calcShoguuEmployeePrice(emp, false);
+  const rateLabel = getShoguuRateLabel(false);
+  return [
+    '<div class="title">業 務 委 託 契 約 書</div>',
+    '<p style="margin-bottom:16px;">' + (r.clientName || '　　　　　　　　　　　　') + '（以下、甲という）は、社会保険労務士齊藤事務所（以下、乙という）に対し、以下の事項を承認の上、業務委託契約を締結します。</p>',
+    treatmentClauseHtml(1),
+    commonConfirmationHtml(2),
+    contractPeriodHtml(3, r, toW),
+    cancellationHtml(4),
+    '<div class="section">5．報酬額 ※表示額は税抜きです。</div>',
+    '<table><tr><td>処遇改善加算サポート基本料（Aの契約なし）</td><td class="right">月額 15,000円</td></tr><tr><td>計画書、報告書作成に要する集計及び根拠資料の作成</td><td class="right">月額 10,000円</td></tr><tr><td>従業員数（月次サービス一覧C参照）' + emp + '名（' + rateLabel + '）</td><td class="right">月額 ' + empPrice.toLocaleString() + '円</td></tr><tr class="total-row"><td class="bold">合計</td><td class="right bold">月額 ' + (cBase1 + cBase2 + empPrice).toLocaleString() + '円</td></tr></table>',
+    '<p style="font-size:9pt; margin-top:6px;">※対象従業員数は実績報告時の集計人数により決定し、毎年８月１日から７月３１日まで適用となります。</p>',
+    commonLegalClauses(6),
+    signatureBlock(r.clientName, r.contractStart, toW)
+  ].join('');
+}
+
+function getContract4(r, toW) {
+  const emp = r.emp;
+  const empC = r.empC;
+  const empPriceA = calcStepPrice(emp, ROMU_RATES);
+  const empPriceC = calcShoguuEmployeePrice(empC, false);
+  const rateLabelC = getShoguuRateLabel(false);
+  const totalA = 15000 + empPriceA;
+  const totalC = 5000 + 10000 + empPriceC;
+  return [
+    '<div class="title">業 務 委 託 契 約 書</div>',
+    '<p style="margin-bottom:16px;">' + (r.clientName || '　　　　　　　　　　　　') + '（以下、甲という）は、社会保険労務士齊藤事務所（以下、乙という）に対し、以下の事項を承認の上、業務委託契約を締結します。</p>',
+    laborClauseHtml(1),
+    treatmentClauseHtml(2),
+    commonConfirmationHtml(3),
+    contractPeriodHtml(4, r, toW),
+    cancellationHtml(5),
+    '<div class="section">6．報酬額 ※表示額は税抜きです。</div>',
+    '<p><strong>【労務サポート契約の報酬額】</strong></p>',
+    '<table><tr><td>労務サポート契約基本料</td><td class="right">月額 15,000円</td></tr><tr><td>従業員数（月次サービス一覧A参照）' + emp + '名</td><td class="right">月額 ' + empPriceA.toLocaleString() + '円</td></tr><tr class="total-row"><td class="bold">合計</td><td class="right bold">月額 ' + totalA.toLocaleString() + '円</td></tr></table>',
+    '<p style="font-size:9pt; margin-top:6px;">※対象従業員数は労働保険年度更新、算定基礎届の対象人数に基づき、毎年８月１日から７月３１日まで適用となります。</p>',
+    '<p style="margin-top:12px;"><strong>【処遇改善加算サポート契約の報酬額】</strong></p>',
+    '<table><tr><td>処遇改善加算サポート基本料(2-(1)の業務)</td><td class="right">月額 5,000円</td></tr><tr><td>計画書、報告書作成に要する集計及び根拠資料の作成(2-(2)～(6)の業務)</td><td class="right">月額 10,000円</td></tr><tr><td>従業員数（月次サービス一覧C参照）' + empC + '名（' + rateLabelC + '）</td><td class="right">月額 ' + empPriceC.toLocaleString() + '円</td></tr><tr class="total-row"><td class="bold">合計</td><td class="right bold">月額 ' + totalC.toLocaleString() + '円</td></tr></table>',
+    '<p style="font-size:9pt; margin-top:6px;">※対象従業員数は実績報告時の集計人数により決定し、毎年８月１日から７月３１日まで適用となります。</p>',
+    commonLegalClauses(6),
+    signatureBlock(r.clientName, r.contractStart, toW)
+  ].join('');
+}
+
+function getContract5(r, toW) {
+  const emp = r.emp;
+  const empC = r.empC || emp;
+  const empPriceA = calcStepPrice(emp, ROMU_RATES);
+  const empPriceB = calcStepPrice(emp, KYUYO_RATES);
+  const empPriceC = calcShoguuEmployeePrice(empC, true);
+  const totalA = 15000 + empPriceA;
+  const totalC = 5000 + 10000 + empPriceC;
+  return [
+    '<div class="title">業 務 委 託 契 約 書</div>',
+    '<p style="margin-bottom:16px;">' + (r.clientName || '　　　　　　　　　　　　') + '（以下、甲という）は、社会保険労務士齊藤事務所（以下、乙という）に対し、以下の事項を承認の上、業務委託契約を締結します。</p>',
+    '<div class="section">1．労務サポート契約</div>',
+    '<p><strong>【労務サポート契約の業務範囲】</strong></p>',
+    '<p>（１）労働保険、社会保険、労務関係に関するご相談、質疑応答<br>（２）人事労務関係書類のひな型のご提供（労働条件通知書など）<br>（３）就業規則、社内規程の運用に関するご相談（作成や改訂のご依頼は別途お見積りとなります）<br>（４）労務関係の情報提供（情報提供ツールからメール配信）<br>（５）労働局、労働基準監督署、ハローワーク、年金事務所へ行う手続き</p>',
+    '<p><strong>【労務サポート契約の確認事項】</strong></p>',
+    '<p>・上記１-（５）の手続きは、手続き料金表に基づき別途ご請求となります<br>・従業員情報等の共有はオフィスステーションをご使用いただきます<br>・台帳登録を甲で行う場合１名あたり110円(税込み)、台帳登録を乙で行う場合１名あたり220円(税込み)<br>・社会保険労務士の範囲外に関することは他士業等をご紹介いたしますのでご相談ください</p>',
+    '<div class="section">2．給与計算サポート契約</div>',
+    '<p><strong>【給与計算サポート契約の業務範囲】</strong></p>',
+    '<p>（１）月次給与の支給額、控除額の計算<br>（２）給与明細書、支給控除一覧表の作成<br>（３）賞与の支給額、控除額の計算（別途費用を頂戴いたします）</p>',
+    '<p><strong>【給与計算サポート契約の確認事項】</strong></p>',
+    '<p>・支給控除一覧表、振込額一覧表のPDFデータをご納品いたします<br>・原則としてweb給与明細をご使用いただきます(１名あたり55円(税込み))<br>・紙の給与明細書をご希望の場合は別途費用を頂戴いたします(１名あたり330円(税込み))<br>・勤怠システムを使用されない場合は乙の指定するExcelに甲にてご入力いただきます<br>・勤怠システムのご案内ができますのでご相談ください<br>・甲は給与計算に必要な情報を給与支給日の12日前までに乙へ提供します<br>・年末調整に関する業務、退職者の源泉徴収票の発行はサポート対象外となります<br>・住民税の特別徴収、普通徴収切替の届出はサポート対象外となります</p>',
+    '<div class="section">3．処遇改善加算サポート契約</div>',
+    '<p><strong>【処遇改善加算サポート契約の業務範囲】</strong></p>',
+    '<p>（１）処遇改善加算に関する相談、助言、質疑応答<br>（２）処遇改善計画書及び実績報告書の作成サポート（別途課金があります）<br>（３）上記（２）に関する行政機関からの問い合わせ対応<br>（４）上記（２）の作成に必要な情報の集計作業及び根拠資料の作成<br>（５）年度途中に新規事業所を追加で申請する場合の計画書の作成サポート<br>（６）年度途中で区分変更を行う場合の計画書の作成サポート</p>',
+    '<p><strong>【処遇改善加算サポート契約の確認事項】</strong></p>',
+    '<p>・処遇改善計画書の作成月（２月）、実績報告書の作成月（７月）は、報酬額の合計１か月相当額を別途課金させていただきます。介護保険、障害福祉の両方の申請がある場合は1.5か月相当額の課金となります。<br>・キャリアパス要件の作成、見直しは別途お見積りさせていただきます。<br>・指定権者への提出は甲にて行っていただきます。<br>・書類作成のサポートは計画書、実績報告書に限ります。<br>・加算届、体制状況一覧などはサポート対象外となります。</p>',
+    commonConfirmationHtml(4),
+    '<div class="section">5．契約期間</div>',
+    '<p>' + toW(r.contractStart) + ' ～ ' + toW(r.contractEnd) + '</p>',
+    '<p>※期間終了日の２ヶ月前までに解約の意思表示がない場合は自動更新といたします。</p>',
+    '<div class="section">6．中途解約</div>',
+    '<p>本契約の当事者は、本契約の有効期間であっても、解約日の２か月前までに相手方に対する書面又は電磁的方法による通知により、本契約の全部又は一部を解約することができます。</p>',
+    '<div class="section">6．報酬額 ※表示額は税抜きです。</div>',
+    '<p><strong>【労務サポート契約の報酬額】</strong></p>',
+    '<table><tr><td>労務サポート契約基本料</td><td class="right">月額 15,000円</td></tr><tr><td>従業員数（月次サービス一覧A参照）' + emp + '名</td><td class="right">月額 ' + empPriceA.toLocaleString() + '円</td></tr><tr class="total-row"><td class="bold">合計</td><td class="right bold">月額 ' + totalA.toLocaleString() + '円</td></tr></table>',
+    '<p style="font-size:9pt; margin-top:6px;">※対象従業員数は労働保険年度更新、算定基礎届の対象人数に基づき、毎年８月１日から７月３１日まで適用となります。</p>',
+    '<p style="margin-top:12px;"><strong>【給与計算サポート契約の報酬額】</strong></p>',
+    '<table><tr class="total-row"><td class="bold">給与計算人数（月次サービス一覧B参照）' + emp + '名</td><td class="right bold">月額 ' + empPriceB.toLocaleString() + '円</td></tr></table>',
+    '<p style="font-size:9pt; margin-top:6px;">※給与計算を行った人数により報酬額を決定いたしますので、従業員の入退職により変動します。</p>',
+    '<p style="margin-top:12px;"><strong>【処遇改善加算サポート契約の報酬額】</strong></p>',
+    '<table><tr><td>処遇改善加算サポート基本料(2-(1)の業務)</td><td class="right">月額 5,000円</td></tr><tr><td>計画書、報告書作成に要する集計及び根拠資料の作成(2-(2)～(6)の業務)</td><td class="right">月額 10,000円</td></tr><tr><td>従業員数（月次サービス一覧C参照）' + empC + '名（給与計算委託あり・50円/名）</td><td class="right">月額 ' + empPriceC.toLocaleString() + '円</td></tr><tr class="total-row"><td class="bold">合計</td><td class="right bold">月額 ' + totalC.toLocaleString() + '円</td></tr></table>',
+    '<p style="font-size:9pt; margin-top:6px;">※対象従業員数は実績報告時の集計人数により決定し、毎年８月１日から７月３１日まで適用となります。</p>',
+    commonLegalClauses(8),
+    signatureBlock(r.clientName, r.contractStart, toW)
+  ].join('');
+}
+
+// ========== 手続き料金表 ==========
+function rateRowsHtml(rates) {
+  let prev = 0;
+  return rates.map(r => {
+    const range = r.max ? (prev + 1) + '名～' + r.max + '名' : (prev + 1) + '名以上';
+    prev = r.max || prev;
+    return '<tr><td>' + range + '</td><td class="right">' + r.price.toLocaleString() + '円/名</td></tr>';
+  }).join('');
+}
+function monthlyFeeTableHtml() {
+  const officeRows = [
+    ['オフィスST マイナンバープラス（顧問先入力）','100円/名'],
+    ['オフィスST マイナンバープラス（事務所入力）','200円/名'],
+    ['オフィスST 労務（A契約あり想定）','200円/名'],
+    ['オフィスST 労務（A契約なし）','400円/名'],
+    ['オフィスST 給与（A契約あり想定）','200円/名'],
+    ['オフィスST 給与（A契約なし）','400円/名'],
+    ['オフィスST Web給与明細','50円/名'],
+    ['Web給与明細＋勤怠のセット利用','300円/名'],
+    ['オフィスST 勤怠','300円/名'],
+    ['オフィスST 操作問い合わせ','5,000円/社'],
+    ['労務サプリ','2,000円/社'],
+    ['Kitera使用料','5,000円/社'],
+    ['オフィスST 有給休暇','100円/名'],
+    ['オフィスST 年末調整（年額）','500円/名'],
+    ['年末調整 従業員専用ダイヤル（年額）','100円/名'],
+  ].map(r => '<tr><td>' + r[0] + '</td><td class="right">' + r[1] + '</td></tr>').join('');
+  return '<div class="title">月 次 報 酬 一 覧</div>' +
+    '<div style="text-align:right; margin-bottom:12px;">社会保険労務士齊藤事務所</div>' +
+    '<h2 style="font-size:13pt; margin:14px 0 8px; color:#2E4057; border-bottom:1px solid #2E4057; padding-bottom:4px;">A. 労務サポート</h2>' +
+    '<table><tr style="background:#2E4057;color:white;"><th>項目</th><th class="right">月額報酬（税抜）</th></tr>' +
+    '<tr><td>基本料</td><td class="right">15,000円</td></tr></table>' +
+    '<table style="margin-top:8px;"><tr style="background:#566573;color:white;"><th>従業員数</th><th class="right">従業員単価（段階計算）</th></tr>' + rateRowsHtml(ROMU_RATES) + '</table>' +
+    '<h2 style="font-size:13pt; margin:14px 0 8px; color:#2E4057; border-bottom:1px solid #2E4057; padding-bottom:4px;">B. 給与計算サポート</h2>' +
+    '<table><tr style="background:#566573;color:white;"><th>従業員数</th><th class="right">従業員単価（段階計算）</th></tr>' + rateRowsHtml(KYUYO_RATES) + '</table>' +
+    '<h2 style="font-size:13pt; margin:14px 0 8px; color:#2E4057; border-bottom:1px solid #2E4057; padding-bottom:4px;">C. 処遇改善加算サポート</h2>' +
+    '<table><tr style="background:#2E4057;color:white;"><th>項目</th><th class="right">月額報酬（税抜）</th></tr>' +
+    '<tr><td>基本料（A契約あり）</td><td class="right">5,000円</td></tr>' +
+    '<tr><td>基本料（A契約なし）</td><td class="right">15,000円</td></tr>' +
+    '<tr><td>集計・根拠資料作成料</td><td class="right">10,000円</td></tr></table>' +
+    '<table style="margin-top:8px;"><tr style="background:#566573;color:white;"><th>区分</th><th class="right">従業員単価</th></tr>' +
+    '<tr><td>給与計算委託あり</td><td class="right">50円/名</td></tr>' +
+    '<tr><td>相談のみ</td><td class="right">100円/名</td></tr></table>' +
+    '<table style="margin-top:8px;"><tr style="background:#566573;color:white;"><th>従業員数</th><th class="right">従業員単価（段階計算）</th></tr>' + rateRowsHtml(SHOGUU_RATES) + '</table>' +
+    '<h2 style="font-size:13pt; margin:14px 0 8px; color:#2E4057; border-bottom:1px solid #2E4057; padding-bottom:4px;">月次オプション</h2>' +
+    '<table><tr style="background:#2E4057;color:white;"><th>項目</th><th class="right">月額・年額報酬（税抜）</th></tr>' + officeRows + '</table>' +
+    '<div style="margin-top:12px; font-size:9pt; color:#555;">※従業員単価は段階計算です。例：21名の場合、1～20名単価と21名以降の単価を組み合わせて計算します。<br>※表示額は税抜きです。消費税が別途かかります。源泉所得税は報酬額（税抜）を基準に計算します。</div>';
+}
+function printFeeTable() {
+  const rows = [
+    ['社会保険関係','新規適用届（被用者5人未満）','20,000円','35,000円'],
+    ['社会保険関係','算定基礎届','13,000円','28,000円'],
+    ['社会保険関係','算定基礎届（1人あたり課金）','200円/名','500円/名'],
+    ['社会保険関係','被保険者資格取得届','2,500円','8,000円'],
+    ['社会保険関係','被扶養者異動届','2,500円','8,000円'],
+    ['社会保険関係','被保険者資格喪失届','2,500円','8,000円'],
+    ['社会保険関係','産前産後関係','2,500円','8,000円'],
+    ['社会保険関係','賞与支払届（給与計算契約ありは賞与計算に含む）','2,500円','20,000円'],
+    ['社会保険関係','賞与支払届（1人あたり課金）','200円/名','500円/名'],
+    ['社会保険関係','月額変更届','2,500円','20,000円'],
+    ['社会保険関係','月額変更届（1人あたり課金）','200円/名','500円/名'],
+    ['社会保険関係','事業所関係変更届','2,500円','8,000円'],
+    ['労働基準法関係','適用事業報告','0円','5,000円'],
+    ['労働基準法関係','36協定届','0円','20,000円'],
+    ['労働基準法関係','一年変形労働時間制に関する協定届','2,500円','30,000円'],
+    ['労働基準法関係','一ヶ月変形労働時間制に関する協定届','2,500円','30,000円'],
+    ['労働基準法関係','一週間非定型変形労働時間制に関する協定届','2,500円','30,000円'],
+    ['労働基準法関係','事業場外労働のみなしに関する協定届','2,500円','30,000円'],
+    ['労働基準法関係','専門業務型裁量労働制に関する協定届','2,500円','30,000円'],
+    ['労働基準法関係','企画業務型裁量労働制に関する決議届','2,500円','30,000円'],
+    ['労働保険関係','労働保険料申告書','13,000円','28,000円'],
+    ['労働保険関係','保険関係成立届','5,000円','12,000円'],
+    ['労働保険関係','労働保険名称・所在地変更届','2,500円','8,000円'],
+    ['労働保険関係','雇用保険設置届（被保険者10人以下）','5,000円','12,000円'],
+    ['労働保険関係','雇用保険各種変更届','2,500円','8,000円'],
+    ['労働保険関係','労働保険年度更新','13,000円','28,000円'],
+    ['労働保険関係','労働保険年度更新（1人あたり課金）','200円/名','500円/名'],
+    ['労働保険関係','雇用保険被保険者資格取得届','2,500円','8,000円'],
+    ['労働保険関係','雇用保険被保険者資格喪失届','2,500円','8,000円'],
+    ['労働保険関係','離職証明書','2,500円','30,000円'],
+    ['労働保険関係','雇用継続給付関係','2,500円','10,000円'],
+    ['労働保険関係','特別加入新規申請','2,500円','35,000円'],
+    ['労働保険関係','特別加入年度更新','2,500円','20,000円'],
+    ['その他','就業規則本則（労基署へ届出なし）','100,000円','200,000円'],
+    ['その他','就業規則本則（労基署へ届出あり）','150,000円','250,000円'],
+    ['その他','賃金規程','30,000円','60,000円'],
+    ['その他','本則以外の規程','20,000円','50,000円'],
+    ['その他','弊所で作成した規則の改訂１条文あたり','-','5,000円'],
+    ['その他','弊所で作成していない規則の改訂１条文あたり','-','10,000円'],
+    ['その他','労災保険給付関係','2,500円','10,000円'],
+    ['その他','処遇改善計画書の作成サポート','１か月分相当額','別途お見積り'],
+    ['その他','処遇改善実績報告書の作成サポート','１か月分相当額','非対応'],
+    ['その他','処遇改善加算に関する規程','80,000円','160,000円'],
+    ['その他','オフィスステーション勤怠初期設定サポート','300,000円','600,000円'],
+    ['その他','オフィスステーション給与初期設定サポート','400,000円','800,000円'],
+  ];
+  const body = rows.map(r => '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td><td class="right">' + r[2] + '</td><td class="right">' + r[3] + '</td></tr>').join('');
+  const html = monthlyFeeTableHtml() + '<div class="page-break"></div>' +
+    '<div class="title">手 続 き 料 金 表</div>' +
+    '<div style="text-align:right; margin-bottom:12px;">社会保険労務士齊藤事務所</div>' +
+    '<table><tr style="background:#2E4057;color:white;"><th>関係法令</th><th>手続き名</th><th class="right">継続契約あり</th><th class="right">スポット価格</th></tr>' + body + '</table>' +
+    '<div style="margin-top:12px; font-size:9pt; color:#555;">※表示額は税抜きです。消費税が別途かかります。<br>※継続契約ありは月次顧問契約（労務サポート契約）をご締結のお客様への価格です。<br>※人数が多い場合は1名あたりの加算料金が適用される場合があります。詳しくはお問い合わせください。<br>社会保険労務士齊藤事務所　TEL：03-6325-1208</div>';
+  printHTML(html, buildPrintTitle('手続き料金表', '', false));
+}
+
+
+// ========== スポット手続き見積・請求 ==========
+const PROCEDURE_FEES = [
+  {category:'社会保険関係', name:'新規適用届（被用者5人未満）', customer:20000, spot:35000},
+  {category:'社会保険関係', name:'算定基礎届', customer:13000, spot:28000},
+  {category:'社会保険関係', name:'算定基礎届（1人あたり課金）', customer:200, spot:500},
+  {category:'社会保険関係', name:'被保険者資格取得届', customer:2500, spot:8000},
+  {category:'社会保険関係', name:'被扶養者異動届', customer:2500, spot:8000},
+  {category:'社会保険関係', name:'被保険者資格喪失届', customer:2500, spot:8000},
+  {category:'社会保険関係', name:'産前産後関係', customer:2500, spot:8000},
+  {category:'社会保険関係', name:'賞与支払届', customer:2500, spot:20000},
+  {category:'社会保険関係', name:'賞与支払届（1人あたり課金）', customer:200, spot:500},
+  {category:'社会保険関係', name:'月額変更届', customer:2500, spot:20000},
+  {category:'社会保険関係', name:'月額変更届（1人あたり課金）', customer:200, spot:500},
+  {category:'社会保険関係', name:'事業所関係変更届', customer:2500, spot:8000},
+  {category:'労働基準法関係', name:'適用事業報告', customer:0, spot:5000},
+  {category:'労働基準法関係', name:'36協定届', customer:0, spot:20000},
+  {category:'労働基準法関係', name:'一年変形労働時間制に関する協定届', customer:2500, spot:30000},
+  {category:'労働基準法関係', name:'一ヶ月変形労働時間制に関する協定届', customer:2500, spot:30000},
+  {category:'労働基準法関係', name:'一週間非定型変形労働時間制に関する協定届', customer:2500, spot:30000},
+  {category:'労働基準法関係', name:'事業場外労働のみなしに関する協定届', customer:2500, spot:30000},
+  {category:'労働基準法関係', name:'専門業務型裁量労働制に関する協定届', customer:2500, spot:30000},
+  {category:'労働基準法関係', name:'企画業務型裁量労働制に関する決議届', customer:2500, spot:30000},
+  {category:'労働保険関係', name:'労働保険料申告書', customer:13000, spot:28000},
+  {category:'労働保険関係', name:'保険関係成立届', customer:5000, spot:12000},
+  {category:'労働保険関係', name:'労働保険名称・所在地変更届', customer:2500, spot:8000},
+  {category:'労働保険関係', name:'雇用保険設置届（被保険者10人以下）', customer:5000, spot:12000},
+  {category:'労働保険関係', name:'雇用保険各種変更届', customer:2500, spot:8000},
+  {category:'労働保険関係', name:'労働保険年度更新', customer:13000, spot:28000},
+  {category:'労働保険関係', name:'労働保険年度更新（1人あたり課金）', customer:200, spot:500},
+  {category:'労働保険関係', name:'雇用保険被保険者資格取得届', customer:2500, spot:8000},
+  {category:'労働保険関係', name:'雇用保険被保険者資格喪失届', customer:2500, spot:8000},
+  {category:'労働保険関係', name:'離職証明書', customer:2500, spot:30000},
+  {category:'労働保険関係', name:'雇用継続給付関係', customer:2500, spot:10000},
+  {category:'労働保険関係', name:'特別加入新規申請', customer:2500, spot:35000},
+  {category:'労働保険関係', name:'特別加入年度更新', customer:2500, spot:20000},
+  {category:'その他', name:'就業規則本則（労基署へ届出なし）', customer:100000, spot:200000},
+  {category:'その他', name:'就業規則本則（労基署へ届出あり）', customer:150000, spot:250000},
+  {category:'その他', name:'賃金規程', customer:30000, spot:60000},
+  {category:'その他', name:'本則以外の規程', customer:20000, spot:50000},
+  {category:'その他', name:'弊所で作成した規則の改訂１条文あたり', customer:null, spot:5000},
+  {category:'その他', name:'弊所で作成していない規則の改訂１条文あたり', customer:null, spot:10000},
+  {category:'その他', name:'労災保険給付関係', customer:2500, spot:10000},
+  {category:'その他', name:'処遇改善加算に関する規程', customer:80000, spot:160000},
+  {category:'その他', name:'オフィスステーション勤怠初期設定サポート', customer:300000, spot:600000},
+  {category:'その他', name:'オフィスステーション給与初期設定サポート', customer:400000, spot:800000},
+];
+let spotItems = [];
+let spotResult = {};
+function getSpotUnit(procedure, type) {
+  return type === 'customer' ? procedure.customer : procedure.spot;
+}
+function renderSpotProcedureChecklist() {
+  const wrap = document.getElementById('spotProcedureChecklist');
+  if (!wrap) return;
+  const previous = {};
+  Array.from(document.querySelectorAll('.spot-procedure-check')).forEach(check => {
+    const qty = document.querySelector('.spot-procedure-qty[data-index="' + check.value + '"]');
+    previous[check.value] = { checked: check.checked, qty: qty ? qty.value : '1' };
+  });
+  const type = document.getElementById('spotCustomerType').value;
+  let currentCategory = '';
+  wrap.innerHTML = PROCEDURE_FEES.map((p, i) => {
+    const unit = getSpotUnit(p, type);
+    const disabled = unit == null;
+    const prev = previous[i] || { checked: false, qty: '1' };
+    const categoryHeader = p.category !== currentCategory ? (currentCategory = p.category, '<div style="font-weight:bold;color:#2E4057;margin:8px 0 4px;">' + p.category + '</div>') : '';
+    return categoryHeader + '<label class="checkbox-item" style="align-items:flex-start; gap:8px; padding:4px 0;">' +
+      '<input type="checkbox" class="spot-procedure-check" value="' + i + '" ' + (disabled ? 'disabled' : '') + (!disabled && prev.checked ? ' checked' : '') + '>' +
+      '<span style="flex:1;">' + p.name + '<br><span style="font-size:11px;color:#66788A;">単価：' + (disabled ? '設定なし' : unit.toLocaleString() + '円') + '</span></span>' +
+      '<input type="number" class="spot-procedure-qty" data-index="' + i + '" min="1" value="' + prev.qty + '" style="width:72px; padding:4px 6px;">' +
+      '</label>';
+  }).join('');
+}
+function calcWithholding(subtotal, enabled) {
+  if (!enabled) return 0;
+  if (subtotal <= 1000000) return Math.floor(subtotal * 0.1021);
+  return Math.floor((subtotal - 1000000) * 0.2042) + 102100;
+}
+function addSelectedSpotItems() {
+  const type = document.getElementById('spotCustomerType').value;
+  const checks = Array.from(document.querySelectorAll('.spot-procedure-check:checked'));
+  if (checks.length === 0) { alert('追加する手続きを選択してください'); return; }
+  checks.forEach(check => {
+    const index = parseInt(check.value);
+    const procedure = PROCEDURE_FEES[index];
+    const unit = getSpotUnit(procedure, type);
+    if (unit == null) return;
+    const qtyInput = document.querySelector('.spot-procedure-qty[data-index="' + index + '"]');
+    const qty = Math.max(1, parseInt(qtyInput && qtyInput.value) || 1);
+    spotItems.push({ procedure, type, qty, unit, amount: qty * unit });
+    check.checked = false;
+  });
+  summarizeSpotItems();
+  renderSpotItems();
+}
+function clearSpotItems() {
+  spotItems = [];
+  spotResult = {};
+  renderSpotItems();
+}
+function addManualSpotItem() {
+  const name = (document.getElementById('spotManualName').value || '').trim();
+  const unit = Math.max(0, parseInt(document.getElementById('spotManualUnit').value) || 0);
+  const qty = Math.max(1, parseInt(document.getElementById('spotManualQty').value) || 1);
+  if (!name) { alert('手入力する手続き名を入力してください'); return; }
+  if (unit <= 0) { alert('単価を入力してください'); return; }
+  spotItems.push({ procedure: { category: '手入力', name }, type: 'manual', qty, unit, amount: qty * unit, manual: true });
+  document.getElementById('spotManualName').value = '';
+  document.getElementById('spotManualUnit').value = '0';
+  document.getElementById('spotManualQty').value = '1';
+  summarizeSpotItems();
+  renderSpotItems();
+}
+function applySpotCustomerTypeToItems() {
+  const type = document.getElementById('spotCustomerType').value;
+  let skipped = [];
+  spotItems = spotItems.map(item => {
+    if (item.manual) return item;
+    const unit = getSpotUnit(item.procedure, type);
+    if (unit == null) {
+      skipped.push(item.procedure.name);
+      return item;
+    }
+    return Object.assign({}, item, { type, unit, amount: unit * item.qty });
+  });
+  summarizeSpotItems();
+  renderSpotItems();
+  if (skipped.length > 0) alert('一部の手続きは選択中の対象区分に料金設定がないため変更しませんでした。');
+}
+function summarizeSpotItems() {
+  const grossSubtotal = spotItems.reduce((sum, item) => sum + item.amount, 0);
+  const discountLabel = document.getElementById('spotDiscountLabel').value || '割引';
+  const discountAmount = Math.max(0, parseInt(document.getElementById('spotDiscountAmount').value) || 0);
+  const discount = Math.min(discountAmount, grossSubtotal);
+  const subtotal = grossSubtotal - discount;
+  const tax = Math.floor(subtotal * 0.1);
+  const withholding = calcWithholding(subtotal, document.getElementById('spotWithholding').value === 'yes');
+  const total = subtotal + tax - withholding;
+  spotResult = {
+    items: spotItems.slice(), grossSubtotal, discountLabel, discount, subtotal, tax, withholding, total,
+    clientName: document.getElementById('clientName').value,
+    targetMonth: formatYearMonth(document.getElementById('spotTargetMonth').value),
+    withholdingEnabled: document.getElementById('spotWithholding').value === 'yes',
+  };
+  return spotResult;
+}
+function renderSpotItems() {
+  const tbody = document.getElementById('spotResultBody');
+  if (!tbody) return;
+  if (spotItems.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#999;padding:20px;">手続きをチェックして「選択した手続きを明細に追加」を押してください</td></tr>';
+    summarizeSpotItems();
+    return;
+  }
+  let rows = spotItems.map((item, index) => '<tr><td>' + (index + 1) + '. ' + item.procedure.name + '<br><span style="font-size:9pt;color:#555;">' + (item.type === 'manual' ? '手入力' : (item.type === 'customer' ? '顧問先料金' : 'スポット価格')) + '：<input type="number" min="1" value="' + item.qty + '" onchange="updateSpotItemQty(' + index + ', this.value)" style="width:64px; padding:3px 6px; font-size:12px; margin:0 3px;">件/名 × ' + item.unit.toLocaleString() + '円</span></td><td class="amount">' + formatYen(item.amount) + '</td><td><button class="btn" style="background:#D64545;color:white;padding:5px 8px;font-size:11px;" onclick="removeSpotItem(' + index + ')">削除</button></td></tr>').join('');
+  const summary = summarizeSpotItems();
+  rows += '<tr class="tax-row"><td>小計（割引前・税抜）</td><td class="amount">' + formatYen(summary.grossSubtotal) + '</td><td></td></tr>';
+  if (summary.discount > 0) rows += '<tr class="discount-row"><td><strong>' + summary.discountLabel + '</strong></td><td class="amount"><strong>△' + formatYen(summary.discount) + '</strong></td><td></td></tr>';
+  rows += '<tr class="tax-row"><td>小計（税抜）</td><td class="amount">' + formatYen(summary.subtotal) + '</td><td></td></tr>';
+  rows += '<tr class="tax-row"><td>消費税（10%）</td><td class="amount">' + formatYen(summary.tax) + '</td><td></td></tr>';
+  rows += '<tr class="tax-row"><td>源泉所得税</td><td class="amount">△' + formatYen(summary.withholding) + '</td><td></td></tr>';
+  rows += '<tr class="total-row"><td>合計</td><td class="amount">' + formatYen(summary.total) + '</td><td></td></tr>';
+  tbody.innerHTML = rows;
+}
+function updateSpotItemQty(index, value) {
+  if (!spotItems[index]) return;
+  const qty = Math.max(1, parseInt(value) || 1);
+  spotItems[index].qty = qty;
+  spotItems[index].amount = qty * spotItems[index].unit;
+  summarizeSpotItems();
+  renderSpotItems();
+}
+function removeSpotItem(index) {
+  if (!spotItems[index]) return;
+  spotItems.splice(index, 1);
+  summarizeSpotItems();
+  renderSpotItems();
+}
+function calcSpot() { summarizeSpotItems(); renderSpotItems(); }
+function officeInfoHtml() {
+  return '社会保険労務士齊藤事務所<br>' +
+    '<span style="white-space:nowrap; font-size:9.5pt;">〒174-0072 東京都板橋区南常盤台1-22-7-402</span><br>' +
+    'TEL：03-6325-1208<br>' +
+    '【お振込先】みずほ銀行（東武練馬支店）<br>' +
+    '【口座番号】（普通）3006778<br>' +
+    '【口座名義】社会保険労務士齊藤事務所　齊藤広幸<br>' +
+    '登録番号：T5810608915535';
+}
+function addDays(date, days) {
+  const d = new Date(date);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+function spotDocumentHtml(kind) {
+  const r = summarizeSpotItems();
+  if (!r.items || r.items.length === 0) { alert('スポット手続きの明細を追加してください'); return ''; }
+  const today = new Date();
+  const fmt = d => d.getFullYear() + '年' + (d.getMonth()+1) + '月' + d.getDate() + '日';
+  const heading = kind === 'invoice' ? 'ご 請 求 書' : 'お 見 積 書';
+  const amountLabel = kind === 'invoice' ? 'ご請求額(スポット報酬)' : 'お見積り額(スポット報酬)';
+  const lead = kind === 'invoice' ? '下記のとおりご請求いたします。' : '下記のとおりお見積りいたします。';
+  const note = kind === 'invoice' ? 'お支払期限：' + fmt(addDays(today, 20)) : 'お見積書の有効期限：' + fmt(addDays(today, 10));
+  const target = r.targetMonth ? '<br>対象年月：' + r.targetMonth : '';
+  const itemRows = r.items.map(item => '<tr><td>' + item.procedure.name + '</td><td class="right">' + item.qty + '</td><td class="right">' + item.unit.toLocaleString() + '円</td><td class="right">' + item.amount.toLocaleString() + '円</td></tr>').join('');
+  return '<div class="title">' + heading + '</div>' +
+    '<table class="doc-header"><tr>' +
+    '<td class="doc-client"><div style="font-size:13.5pt; font-weight:bold; border-bottom:1px solid #CBD5E1; padding-bottom:8px;">' + (r.clientName || '　　　　　　　　　　　　') + ' 御中</div>' +
+    '<div class="doc-lead">' + lead + '</div>' +
+    '<div class="amount-box"><span class="amount-label">' + amountLabel + '</span><span class="amount-value">' + r.total.toLocaleString() + '円</span></div>' +
+    '<span class="doc-note">' + note + target + '</span></td>' +
+    '<td class="doc-office">発行日：' + fmt(today) + '<br>' + officeInfoHtml() + '</td>' +
+    '</tr></table>' +
+    '<table class="doc-detail-table"><tr style="background:#2E4057; color:white;"><th>内容</th><th style="width:70px;" class="right">数量</th><th style="width:110px;" class="right">単価</th><th style="width:130px;" class="right">金額</th></tr>' +
+    itemRows +
+    '<tr><td colspan="3" class="right bold">小計（割引前・税抜）</td><td class="right bold">' + r.grossSubtotal.toLocaleString() + '円</td></tr>' +
+    (r.discount > 0 ? '<tr class="discount-row"><td colspan="3" class="right"><strong>' + r.discountLabel + '</strong></td><td class="right"><strong>△' + r.discount.toLocaleString() + '円</strong></td></tr>' : '') +
+    '<tr><td colspan="3" class="right bold">小計（税抜）</td><td class="right bold">' + r.subtotal.toLocaleString() + '円</td></tr>' +
+    '<tr><td colspan="3" class="right">消費税（10%）</td><td class="right">' + r.tax.toLocaleString() + '円</td></tr>' +
+    '<tr><td colspan="3" class="right">源泉所得税</td><td class="right">△' + r.withholding.toLocaleString() + '円</td></tr>' +
+    '<tr class="total-row"><td colspan="3" class="right bold">合計</td><td class="right bold">' + r.total.toLocaleString() + '円</td></tr></table>' +
+    '<div style="font-size:9pt; color:#555; margin-top:8px;">※表示額は税込です。源泉所得税は報酬額（税抜）を基準に計算しています。</div>';
+}
+function printSpotEstimate() {
+  const html = spotDocumentHtml('estimate');
+  if (html) printHTML(html, buildPrintTitle('お見積書(スポット報酬)', spotResult.clientName));
+}
+function printSpotInvoice() {
+  const html = spotDocumentHtml('invoice');
+  if (html) printHTML(html, buildPrintTitle('ご請求書', spotResult.clientName));
+}
+
+// 初期計算
+calc();
+renderSpotProcedureChecklist();
+calcSpot();
+</script>
+</body>
+</html>
