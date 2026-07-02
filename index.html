@@ -155,11 +155,11 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: #2E4057
   <h2>オフィスステーション・その他月次利用料</h2>
   <div class="notice">元Excelの月次サービス一覧にある任意項目です。顧問先の利用状況に合わせて選択してください（複数選択可）。</div>
   <div style="margin-top:12px;" class="checkbox-group">
-    <label class="checkbox-item"><input type="checkbox" id="ostMyNumber1" onchange="calc()"> マイナンバープラス（顧問先が入力）100円/名</label>
+    <label class="checkbox-item"><input type="checkbox" id="ostMyNumber1" onchange="calc()"> マイナンバープラス（お客様でご入力）100円/名</label>
     <label class="checkbox-item"><input type="checkbox" id="ostMyNumber2" onchange="calc()"> マイナンバープラス（事務所が入力）200円/名</label>
-    <label class="checkbox-item"><input type="checkbox" id="ostRomu" onchange="calc()"> オフィスST 労務（A契約あり想定）200円/名</label>
+    <label class="checkbox-item"><input type="checkbox" id="ostRomu" onchange="calc()"> オフィスST 労務（A契約あり）200円/名</label>
     <label class="checkbox-item"><input type="checkbox" id="ostRomuNoA" onchange="calc()"> オフィスST 労務（A契約なし）400円/名</label>
-    <label class="checkbox-item"><input type="checkbox" id="ostKyuyo" onchange="calc()"> オフィスST 給与（A契約あり想定）200円/名</label>
+    <label class="checkbox-item"><input type="checkbox" id="ostKyuyo" onchange="calc()"> オフィスST 給与（A契約あり）200円/名</label>
     <label class="checkbox-item"><input type="checkbox" id="ostKyuyoNoB" onchange="calc()"> オフィスST 給与（A契約なし）400円/名</label>
     <label class="checkbox-item"><input type="checkbox" id="ostWeb" onchange="calc()"> オフィスST Web給与明細 50円/名</label>
     <label class="checkbox-item"><input type="checkbox" id="ostWebKintaiSet" onchange="calc()"> Web給与明細＋勤怠のセット利用 300円/名</label>
@@ -402,11 +402,11 @@ function calc() {
 
   // オフィスST
   const ostItems = [
-    {id: 'ostMyNumber1', label: 'オフィスST マイナンバープラス（顧問先入力）', price: 100, unit: 'employee'},
+    {id: 'ostMyNumber1', label: 'オフィスST マイナンバープラス（お客様でご入力）', price: 100, unit: 'employee'},
     {id: 'ostMyNumber2', label: 'オフィスST マイナンバープラス（事務所入力）', price: 200, unit: 'employee'},
-    {id: 'ostRomu',      label: 'オフィスST 労務（A契約あり想定）', price: 200, unit: 'employee'},
+    {id: 'ostRomu',      label: 'オフィスST 労務（A契約あり）', price: 200, unit: 'employee'},
     {id: 'ostRomuNoA',   label: 'オフィスST 労務（A契約なし）', price: 400, unit: 'employee'},
-    {id: 'ostKyuyo',     label: 'オフィスST 給与（A契約あり想定）', price: 200, unit: 'payroll'},
+    {id: 'ostKyuyo',     label: 'オフィスST 給与（A契約あり）', price: 200, unit: 'payroll'},
     {id: 'ostKyuyoNoB',  label: 'オフィスST 給与（A契約なし）', price: 400, unit: 'payroll'},
     {id: 'ostWeb',       label: 'オフィスST Web給与明細', price: 50, unit: 'payroll'},
     {id: 'ostWebKintaiSet', label: 'Web給与明細＋勤怠のセット利用', price: 300, unit: 'payroll'},
