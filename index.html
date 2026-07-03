@@ -168,8 +168,8 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: #2E4057
     <label class="checkbox-item"><input type="checkbox" id="ostKyuyo" onchange="calc()"> オフィスST 給与（A契約あり）200円/名</label>
     <label class="checkbox-item"><input type="checkbox" id="ostKyuyoNoB" onchange="calc()"> オフィスST 給与（A契約なし）400円/名</label>
     <label class="checkbox-item"><input type="checkbox" id="ostWeb" onchange="calc()"> オフィスST Web給与明細 50円/名</label>
-    <label class="checkbox-item"><input type="checkbox" id="ostWebKintaiSet" onchange="calc()"> Web給与明細＋勤怠のセット利用 300円/名</label>
-    <label class="checkbox-item"><input type="checkbox" id="ostKintai" onchange="calc()"> オフィスST 勤怠 300円/名</label>
+    <label class="checkbox-item"><input type="checkbox" id="ostWebKintaiSet" onchange="calc()"> オフィスST 勤怠 250円/名（B契約あり）</label>
+    <label class="checkbox-item"><input type="checkbox" id="ostKintai" onchange="calc()"> オフィスST 勤怠 300円/名（B契約なし）</label>
     <label class="checkbox-item"><input type="checkbox" id="ostSupport" onchange="calc()"> オフィスST 操作問い合わせ 5,000円/社</label>
     <label class="checkbox-item"><input type="checkbox" id="romuSapuri" onchange="calc()"> 労務サプリ 2,000円/社</label>
     <label class="checkbox-item"><input type="checkbox" id="kitera" onchange="calc()"> Kitera使用料 5,000円</label>
@@ -459,8 +459,8 @@ function calc() {
     {id: 'ostKyuyo',     label: 'オフィスST 給与（A契約あり）', price: 200, unit: 'payroll'},
     {id: 'ostKyuyoNoB',  label: 'オフィスST 給与（A契約なし）', price: 400, unit: 'payroll'},
     {id: 'ostWeb',       label: 'オフィスST Web給与明細', price: 50, unit: 'payroll'},
-    {id: 'ostWebKintaiSet', label: 'Web給与明細＋勤怠のセット利用', price: 300, unit: 'payroll'},
-    {id: 'ostKintai',    label: 'オフィスST 勤怠', price: 300, unit: 'payroll'},
+    {id: 'ostWebKintaiSet', label: 'オフィスST 勤怠（B契約あり）', price: 250, unit: 'payroll'},
+    {id: 'ostKintai',    label: 'オフィスST 勤怠（B契約なし）', price: 300, unit: 'payroll'},
     {id: 'ostSupport',   label: 'オフィスST 操作問い合わせ', price: 5000, unit: 'company'},
     {id: 'romuSapuri',   label: '労務サプリ', price: 2000, unit: 'company'},
     {id: 'kitera',       label: 'Kitera使用料', price: 5000, unit: 'company'},
@@ -1021,8 +1021,8 @@ function monthlyFeeTableHtml() {
     ['オフィスST 給与（A契約あり）','200円/名'],
     ['オフィスST 給与（A契約なし）','400円/名'],
     ['オフィスST Web給与明細','50円/名'],
-    ['Web給与明細＋勤怠のセット利用','300円/名'],
-    ['オフィスST 勤怠','300円/名'],
+    ['オフィスST 勤怠（B契約あり）','250円/名'],
+    ['オフィスST 勤怠（B契約なし）','300円/名'],
     ['オフィスST 操作問い合わせ','5,000円/社'],
     ['労務サプリ','2,000円/社'],
     ['Kitera使用料','5,000円/社'],
