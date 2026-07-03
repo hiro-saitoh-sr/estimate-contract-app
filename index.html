@@ -213,7 +213,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: #2E4057
   <div class="form-row triple" style="margin-top:12px;">
     <div>
       <label>対象区分</label>
-      <select id="spotCustomerType" onchange="renderSpotProcedureChecklist(); applySpotCustomerTypeToItems(false)">
+      <select id="spotCustomerType" onchange="renderSpotProcedureChecklist(); syncSpotItemsFromChecklist(false)">
         <option value="customer">顧問先（継続契約あり）</option>
         <option value="spot">顧問先以外（スポット価格）</option>
       </select>
@@ -260,8 +260,6 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: #2E4057
   </div>
   <div class="btn-group" style="margin-top:8px;">
     <button class="btn btn-blue" onclick="addManualSpotItem()">＋ 手入力明細を追加</button>
-    <button class="btn btn-blue" onclick="addSelectedSpotItems()">＋ 選択した手続きを明細に追加</button>
-    <button class="btn btn-orange" onclick="applySpotCustomerTypeToItems()">追加済み明細の単価を対象区分に反映</button>
     <button class="btn" style="background:#7B8794;color:white;" onclick="clearSpotItems()">明細クリア</button>
   </div>
   <table class="result-table" style="margin-top:8px;">
@@ -1124,9 +1122,9 @@ function renderSpotProcedureChecklist() {
     const prev = previous[i] || { checked: false, qty: '1' };
     const categoryHeader = p.category !== currentCategory ? (currentCategory = p.category, '<div style="font-weight:bold;color:#2E4057;margin:8px 0 4px;">' + p.category + '</div>') : '';
     return categoryHeader + '<label class="checkbox-item" style="align-items:flex-start; gap:8px; padding:4px 0;">' +
-      '<input type="checkbox" class="spot-procedure-check" value="' + i + '" ' + (disabled ? 'disabled' : '') + (!disabled && prev.checked ? ' checked' : '') + '>' +
+      '<input type="checkbox" class="spot-procedure-check" value="' + i + '" onchange="syncSpotItemsFromChecklist()" ' + (disabled ? 'disabled' : '') + (!disabled && prev.checked ? ' checked' : '') + '>' +
       '<span style="flex:1;">' + p.name + '<br><span style="font-size:11px;color:#66788A;">単価：' + (disabled ? '設定なし' : unit.toLocaleString() + '円') + '</span></span>' +
-      '<input type="number" class="spot-procedure-qty" data-index="' + i + '" min="1" value="' + prev.qty + '" style="width:72px; padding:4px 6px;">' +
+      '<input type="number" class="spot-procedure-qty" data-index="' + i + '" min="1" value="' + prev.qty + '" onchange="syncSpotItemsFromChecklist()" style="width:72px; padding:4px 6px;">' +
       '</label>';
   }).join('');
 }
@@ -1134,6 +1132,29 @@ function calcWithholding(subtotal, enabled) {
   if (!enabled) return 0;
   if (subtotal <= 1000000) return Math.floor(subtotal * 0.1021);
   return Math.floor((subtotal - 1000000) * 0.2042) + 102100;
+}
+function syncSpotItemsFromChecklist(showAlert = true) {
+  const type = document.getElementById('spotCustomerType').value;
+  const manualItems = spotItems.filter(item => item.manual);
+  const checks = Array.from(document.querySelectorAll('.spot-procedure-check:checked'));
+  const checkedItems = [];
+  const skipped = [];
+  checks.forEach(check => {
+    const index = parseInt(check.value);
+    const procedure = PROCEDURE_FEES[index];
+    const unit = getSpotUnit(procedure, type);
+    if (unit == null) {
+      skipped.push(procedure.name);
+      return;
+    }
+    const qtyInput = document.querySelector('.spot-procedure-qty[data-index="' + index + '"]');
+    const qty = Math.max(1, parseInt(qtyInput && qtyInput.value) || 1);
+    checkedItems.push({ procedure, type, qty, unit, amount: qty * unit, checklist: true });
+  });
+  spotItems = checkedItems.concat(manualItems);
+  summarizeSpotItems();
+  renderSpotItems();
+  if (showAlert && skipped.length > 0) alert('一部の手続きは選択中の対象区分に料金設定がないため明細に反映しませんでした。');
 }
 function addSelectedSpotItems() {
   const type = document.getElementById('spotCustomerType').value;
@@ -1146,7 +1167,7 @@ function addSelectedSpotItems() {
     if (unit == null) return;
     const qtyInput = document.querySelector('.spot-procedure-qty[data-index="' + index + '"]');
     const qty = Math.max(1, parseInt(qtyInput && qtyInput.value) || 1);
-    spotItems.push({ procedure, type, qty, unit, amount: qty * unit });
+    spotItems.push({ procedure, type, qty, unit, amount: qty * unit, checklist: true });
     check.checked = false;
   });
   summarizeSpotItems();
@@ -1155,6 +1176,7 @@ function addSelectedSpotItems() {
 function clearSpotItems() {
   spotItems = [];
   spotResult = {};
+  Array.from(document.querySelectorAll('.spot-procedure-check')).forEach(check => { check.checked = false; });
   renderSpotItems();
 }
 function addManualSpotItem() {
@@ -1171,20 +1193,7 @@ function addManualSpotItem() {
   renderSpotItems();
 }
 function applySpotCustomerTypeToItems(showAlert = true) {
-  const type = document.getElementById('spotCustomerType').value;
-  let skipped = [];
-  spotItems = spotItems.map(item => {
-    if (item.manual) return item;
-    const unit = getSpotUnit(item.procedure, type);
-    if (unit == null) {
-      skipped.push(item.procedure.name);
-      return item;
-    }
-    return Object.assign({}, item, { type, unit, amount: unit * item.qty });
-  });
-  summarizeSpotItems();
-  renderSpotItems();
-  if (showAlert && skipped.length > 0) alert('一部の手続きは選択中の対象区分に料金設定がないため変更しませんでした。');
+  syncSpotItemsFromChecklist(showAlert);
 }
 function summarizeSpotItems() {
   const grossSubtotal = spotItems.reduce((sum, item) => sum + item.amount, 0);
@@ -1207,7 +1216,7 @@ function renderSpotItems() {
   const tbody = document.getElementById('spotResultBody');
   if (!tbody) return;
   if (spotItems.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#999;padding:20px;">手続きをチェックして「選択した手続きを明細に追加」を押してください</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#999;padding:20px;">請求する手続きにチェックを入れてください</td></tr>';
     summarizeSpotItems();
     return;
   }
@@ -1224,13 +1233,25 @@ function renderSpotItems() {
 function updateSpotItemQty(index, value) {
   if (!spotItems[index]) return;
   const qty = Math.max(1, parseInt(value) || 1);
-  spotItems[index].qty = qty;
-  spotItems[index].amount = qty * spotItems[index].unit;
+  const item = spotItems[index];
+  item.qty = qty;
+  item.amount = qty * item.unit;
+  if (item.checklist) {
+    const procedureIndex = PROCEDURE_FEES.indexOf(item.procedure);
+    const qtyInput = document.querySelector('.spot-procedure-qty[data-index="' + procedureIndex + '"]');
+    if (qtyInput) qtyInput.value = String(qty);
+  }
   summarizeSpotItems();
   renderSpotItems();
 }
 function removeSpotItem(index) {
   if (!spotItems[index]) return;
+  const item = spotItems[index];
+  if (item.checklist) {
+    const procedureIndex = PROCEDURE_FEES.indexOf(item.procedure);
+    const check = document.querySelector('.spot-procedure-check[value="' + procedureIndex + '"]');
+    if (check) check.checked = false;
+  }
   spotItems.splice(index, 1);
   summarizeSpotItems();
   renderSpotItems();
