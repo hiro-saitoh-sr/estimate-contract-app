@@ -48,6 +48,12 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: #2E4057
 .tag-a { background: #EBF5FB; color: #2980B9; }
 .tag-b { background: #EAFAF1; color: #27AE60; }
 .tag-c { background: #FEF9E7; color: #F39C12; }
+.spot-search { margin-bottom: 8px; }
+.spot-procedure-row { border-bottom: 1px solid #EEF2F7; }
+.spot-procedure-row:last-child { border-bottom: none; }
+.spot-item-main { font-weight: bold; color: #243B53; }
+.spot-item-meta { font-size: 12px; color: #66788A; margin-top: 4px; }
+.spot-item-manual { color: #8A5A00; }
 </style>
 </head>
 <body>
@@ -242,6 +248,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: #2E4057
   </div>
   <div class="notice" style="margin-top:8px;">見積有効期限：発行日から10日後 ／ 請求支払期限：発行日から20日後</div>
   <div class="section-title">手続き選択</div>
+  <input type="text" id="spotProcedureSearch" class="spot-search" placeholder="手続き名を検索（例：資格取得、年度更新）" oninput="filterSpotProcedures()">
   <div id="spotProcedureChecklist" style="max-height:260px; overflow:auto; border:1px solid #E0E6ED; border-radius:6px; padding:10px; background:#FAFBFC;"></div>
   <div class="section-title">一覧外の手続き</div>
   <div class="form-row triple">
@@ -352,6 +359,51 @@ function escapeHtml(s) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+function getInputValue(id) {
+  const el = document.getElementById(id);
+  return el ? String(el.value || '').trim() : '';
+}
+function alertMissing(items) {
+  alert('出力前に確認してください。\n\n' + items.map(item => '・' + item).join('\n'));
+}
+function hasMonthlyServiceSelected() {
+  return ['serviceA', 'serviceB', 'serviceC'].some(id => {
+    const el = document.getElementById(id);
+    return el && el.checked;
+  });
+}
+function validateMonthlyOutput(kind) {
+  calc();
+  const missing = [];
+  if (!getInputValue('clientName')) missing.push('顧問先名');
+  if (!hasMonthlyServiceSelected()) missing.push('契約サービス');
+  if (getEmpCount() <= 0) missing.push('従業員数');
+  if (document.getElementById('serviceB').checked && getPayrollCount() <= 0) missing.push('給与計算人数');
+  if (document.getElementById('serviceC').checked && getEmpCountC() <= 0) missing.push('処遇改善対象人数');
+  if (kind === 'contract') {
+    if (!getInputValue('contractStart')) missing.push('契約開始日');
+    if (!getInputValue('contractEnd')) missing.push('契約終了日');
+    if (!getInputValue('clientPostalCode')) missing.push('郵便番号');
+    if (!getInputValue('clientAddress')) missing.push('所在地');
+  }
+  if (missing.length > 0) {
+    alertMissing(missing);
+    return false;
+  }
+  return true;
+}
+function validateSpotOutput() {
+  summarizeSpotItems();
+  const missing = [];
+  if (!getInputValue('clientName')) missing.push('顧問先名');
+  if (!getInputValue('spotTargetMonth')) missing.push('対象年月');
+  if (!spotItems.length) missing.push('請求する手続き');
+  if (missing.length > 0) {
+    alertMissing(missing);
+    return false;
+  }
+  return true;
 }
 
 let calcResult = {};
@@ -559,6 +611,7 @@ function buildPrintTitle(kind, clientName, includeClient = true) {
 }
 // ========== 見積書 ==========
 function printEstimate() {
+  if (!validateMonthlyOutput('estimate')) return;
   if (!calcResult.items) { alert('サービスを選択してください'); return; }
   const r = calcResult;
   const today = new Date();
@@ -609,6 +662,7 @@ function printEstimate() {
 
 // ========== 料金計算明細 ==========
 function printDetail() {
+  if (!validateMonthlyOutput('detail')) return;
   if (!calcResult.items) { alert('サービスを選択してください'); return; }
   const r = calcResult;
   const fmt = d => `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
@@ -657,7 +711,7 @@ function getContractTypeName(t) {
 }
 
 function printContract() {
-  calc();
+  if (!validateMonthlyOutput('contract')) return;
   if (!calcResult.items) { alert('サービスを選択してください'); return; }
   const r = calcResult;
   const t = getContractType();
@@ -1120,13 +1174,34 @@ function renderSpotProcedureChecklist() {
     const unit = getSpotUnit(p, type);
     const disabled = unit == null;
     const prev = previous[i] || { checked: false, qty: '1' };
-    const categoryHeader = p.category !== currentCategory ? (currentCategory = p.category, '<div style="font-weight:bold;color:#2E4057;margin:8px 0 4px;">' + p.category + '</div>') : '';
-    return categoryHeader + '<label class="checkbox-item" style="align-items:flex-start; gap:8px; padding:4px 0;">' +
+    const categoryHeader = p.category !== currentCategory ? (currentCategory = p.category, '<div class="spot-category-header" data-category="' + escapeHtml(p.category) + '" style="font-weight:bold;color:#2E4057;margin:8px 0 4px;">' + p.category + '</div>') : '';
+    return categoryHeader + '<label class="checkbox-item spot-procedure-row" data-search="' + escapeHtml((p.category + ' ' + p.name).toLowerCase()) + '" style="align-items:flex-start; gap:8px; padding:6px 0;">' +
       '<input type="checkbox" class="spot-procedure-check" value="' + i + '" onchange="syncSpotItemsFromChecklist()" ' + (disabled ? 'disabled' : '') + (!disabled && prev.checked ? ' checked' : '') + '>' +
       '<span style="flex:1;">' + p.name + '<br><span style="font-size:11px;color:#66788A;">単価：' + (disabled ? '設定なし' : unit.toLocaleString() + '円') + '</span></span>' +
       '<input type="number" class="spot-procedure-qty" data-index="' + i + '" min="1" value="' + prev.qty + '" onchange="syncSpotItemsFromChecklist()" style="width:72px; padding:4px 6px;">' +
       '</label>';
   }).join('');
+  filterSpotProcedures();
+}
+function filterSpotProcedures() {
+  const input = document.getElementById('spotProcedureSearch');
+  const keyword = input ? input.value.trim().toLowerCase() : '';
+  Array.from(document.querySelectorAll('.spot-procedure-row')).forEach(row => {
+    const text = row.getAttribute('data-search') || '';
+    row.style.display = !keyword || text.indexOf(keyword) !== -1 ? 'flex' : 'none';
+  });
+  Array.from(document.querySelectorAll('.spot-category-header')).forEach(header => {
+    let hasVisibleRow = false;
+    let node = header.nextElementSibling;
+    while (node && !node.classList.contains('spot-category-header')) {
+      if (node.classList.contains('spot-procedure-row') && node.style.display !== 'none') {
+        hasVisibleRow = true;
+        break;
+      }
+      node = node.nextElementSibling;
+    }
+    header.style.display = hasVisibleRow ? 'block' : 'none';
+  });
 }
 function calcWithholding(subtotal, enabled) {
   if (!enabled) return 0;
@@ -1220,7 +1295,13 @@ function renderSpotItems() {
     summarizeSpotItems();
     return;
   }
-  let rows = spotItems.map((item, index) => '<tr><td>' + (index + 1) + '. ' + item.procedure.name + '<br><span style="font-size:9pt;color:#555;">' + (item.type === 'manual' ? '手入力' : (item.type === 'customer' ? '顧問先料金' : 'スポット価格')) + '：<input type="number" min="1" value="' + item.qty + '" onchange="updateSpotItemQty(' + index + ', this.value)" style="width:64px; padding:3px 6px; font-size:12px; margin:0 3px;">件/名 × ' + item.unit.toLocaleString() + '円</span></td><td class="amount">' + formatYen(item.amount) + '</td><td><button class="btn" style="background:#D64545;color:white;padding:5px 8px;font-size:11px;" onclick="removeSpotItem(' + index + ')">削除</button></td></tr>').join('');
+  let rows = spotItems.map((item, index) => {
+    const typeLabel = item.type === 'manual' ? '手入力' : (item.type === 'customer' ? '顧問先料金' : 'スポット価格');
+    const typeClass = item.type === 'manual' ? ' spot-item-manual' : '';
+    return '<tr><td><div class="spot-item-main">' + (index + 1) + '. ' + item.procedure.name + '</div>' +
+      '<div class="spot-item-meta' + typeClass + '">' + typeLabel + '：<input type="number" min="1" value="' + item.qty + '" onchange="updateSpotItemQty(' + index + ', this.value)" style="width:64px; padding:3px 6px; font-size:12px; margin:0 3px;">件/名 × ' + item.unit.toLocaleString() + '円</div></td>' +
+      '<td class="amount">' + formatYen(item.amount) + '</td><td><button class="btn" style="background:#D64545;color:white;padding:5px 8px;font-size:11px;" onclick="removeSpotItem(' + index + ')">削除</button></td></tr>';
+  }).join('');
   const summary = summarizeSpotItems();
   rows += '<tr class="tax-row"><td>小計（割引前・税抜）</td><td class="amount">' + formatYen(summary.grossSubtotal) + '</td><td></td></tr>';
   if (summary.discount > 0) rows += '<tr class="discount-row"><td><strong>' + summary.discountLabel + '</strong></td><td class="amount"><strong>△' + formatYen(summary.discount) + '</strong></td><td></td></tr>';
@@ -1301,10 +1382,12 @@ function spotDocumentHtml(kind) {
     '<div style="font-size:9pt; color:#555; margin-top:8px;">※表示額は税込です。源泉所得税は報酬額（税抜）を基準に計算しています。</div>';
 }
 function printSpotEstimate() {
+  if (!validateSpotOutput()) return;
   const html = spotDocumentHtml('estimate');
   if (html) printHTML(html, buildPrintTitle('お見積書(スポット報酬)', spotResult.clientName));
 }
 function printSpotInvoice() {
+  if (!validateSpotOutput()) return;
   const html = spotDocumentHtml('invoice');
   if (html) printHTML(html, buildPrintTitle('ご請求書', spotResult.clientName));
 }
