@@ -213,7 +213,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: #2E4057
   <div class="form-row triple" style="margin-top:12px;">
     <div>
       <label>対象区分</label>
-      <select id="spotCustomerType" onchange="renderSpotProcedureChecklist(); calcSpot()">
+      <select id="spotCustomerType" onchange="renderSpotProcedureChecklist(); applySpotCustomerTypeToItems(false)">
         <option value="customer">顧問先（継続契約あり）</option>
         <option value="spot">顧問先以外（スポット価格）</option>
       </select>
@@ -1170,7 +1170,7 @@ function addManualSpotItem() {
   summarizeSpotItems();
   renderSpotItems();
 }
-function applySpotCustomerTypeToItems() {
+function applySpotCustomerTypeToItems(showAlert = true) {
   const type = document.getElementById('spotCustomerType').value;
   let skipped = [];
   spotItems = spotItems.map(item => {
@@ -1184,7 +1184,7 @@ function applySpotCustomerTypeToItems() {
   });
   summarizeSpotItems();
   renderSpotItems();
-  if (skipped.length > 0) alert('一部の手続きは選択中の対象区分に料金設定がないため変更しませんでした。');
+  if (showAlert && skipped.length > 0) alert('一部の手続きは選択中の対象区分に料金設定がないため変更しませんでした。');
 }
 function summarizeSpotItems() {
   const grossSubtotal = spotItems.reduce((sum, item) => sum + item.amount, 0);
