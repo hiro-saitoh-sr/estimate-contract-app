@@ -171,7 +171,6 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: #2E4057
     <label class="checkbox-item"><input type="checkbox" id="ostWebKintaiSet" onchange="calc()"> オフィスST 勤怠 250円/名（B契約あり）</label>
     <label class="checkbox-item"><input type="checkbox" id="ostKintai" onchange="calc()"> オフィスST 勤怠 300円/名（B契約なし）</label>
     <label class="checkbox-item"><input type="checkbox" id="ostSupport" onchange="calc()"> オフィスST 操作問い合わせ 5,000円/社</label>
-    <label class="checkbox-item"><input type="checkbox" id="romuSapuri" onchange="calc()"> 労務サプリ 2,000円/社</label>
     <label class="checkbox-item"><input type="checkbox" id="kitera" onchange="calc()"> Kitera使用料 5,000円</label>
     <label class="checkbox-item"><input type="checkbox" id="ostPaidLeave" onchange="calc()"> オフィスST 有給休暇 100円/名</label>
     <label class="checkbox-item"><input type="checkbox" id="ostYearEnd" onchange="calc()"> オフィスST 年末調整（年額）500円/名</label>
@@ -462,7 +461,6 @@ function calc() {
     {id: 'ostWebKintaiSet', label: 'オフィスST 勤怠（B契約あり）', price: 250, unit: 'payroll'},
     {id: 'ostKintai',    label: 'オフィスST 勤怠（B契約なし）', price: 300, unit: 'payroll'},
     {id: 'ostSupport',   label: 'オフィスST 操作問い合わせ', price: 5000, unit: 'company'},
-    {id: 'romuSapuri',   label: '労務サプリ', price: 2000, unit: 'company'},
     {id: 'kitera',       label: 'Kitera使用料', price: 5000, unit: 'company'},
     {id: 'ostPaidLeave', label: 'オフィスST 有給休暇', price: 100, unit: 'employee'},
     {id: 'ostYearEnd',   label: 'オフィスST 年末調整（年額）', price: 500, unit: 'employee'},
@@ -1024,7 +1022,6 @@ function monthlyFeeTableHtml() {
     ['オフィスST 勤怠（B契約あり）','250円/名'],
     ['オフィスST 勤怠（B契約なし）','300円/名'],
     ['オフィスST 操作問い合わせ','5,000円/社'],
-    ['労務サプリ','2,000円/社'],
     ['Kitera使用料','5,000円/社'],
     ['オフィスST 有給休暇','100円/名'],
     ['オフィスST 年末調整（年額）','500円/名'],
