@@ -662,8 +662,33 @@ function detailBreakdownHtml(r) {
       stepBreakdownRowsHtml(r.empC, cRates) +
       '<tr><td colspan="3" class="right bold">C 小計</td><td class="right bold">' + (base1 + 10000 + empPrice).toLocaleString() + '円</td></tr></table>';
   }
-  html += '<div style="font-size:9pt; color:#555; margin-top:8px;">※月次オプションは、選択された各サービスの人数・単価に基づき計算しています。</div>';
+  const optionItems = r.items.filter(item => {
+    const label = item.label.replace(/^\s+/, '');
+    return !label.startsWith('A.') &&
+      !label.startsWith('B.') &&
+      !label.startsWith('C.') &&
+      !label.startsWith('従業員数単価') &&
+      !label.startsWith('集計・根拠資料作成料') &&
+      !label.startsWith('処遇改善対象人数単価');
+  });
+  if (optionItems.length > 0) {
+    const optionRows = optionItems.map(item => '<tr><td>' + item.label + '</td><td class="right">' + item.amount.toLocaleString() + '円</td></tr>').join('');
+    html += '<table><tr style="background:#566573;color:white;"><th colspan="2">月次オプション</th></tr>' +
+      '<tr style="background:#EEF2F7;"><th>項目</th><th class="right">金額</th></tr>' +
+      optionRows +
+      '<tr><td class="right bold">月次オプション 小計</td><td class="right bold">' + optionItems.reduce((sum, item) => sum + item.amount, 0).toLocaleString() + '円</td></tr></table>';
+  }
   return html;
+}
+
+function detailTotalHtml(r) {
+  return '<div class="section">合計</div>' +
+    '<table>' +
+    '<tr><td class="right bold">小計（税抜）</td><td class="right bold">' + r.subtotal.toLocaleString() + '円</td></tr>' +
+    '<tr><td class="right">消費税（10%）</td><td class="right">' + r.tax.toLocaleString() + '円</td></tr>' +
+    '<tr><td class="right">源泉所得税（' + (r.subtotal <= 1000000 ? '10.21%' : '超過額×20.42%＋102,100円') + '）</td><td class="right">△' + r.gensen.toLocaleString() + '円</td></tr>' +
+    '<tr class="total-row"><td class="right bold">お振替月額（税込）</td><td class="right bold">' + r.total.toLocaleString() + '円</td></tr>' +
+    '</table>';
 }
 // ========== 見積書 ==========
 function printEstimate() {
@@ -723,10 +748,6 @@ function printDetail() {
   const r = calcResult;
   const fmt = d => `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
 
-  let rows = r.items.map(i =>
-    `<tr><td>${i.label}</td><td class="right">${i.amount.toLocaleString()}円</td></tr>`
-  ).join('');
-
   const html = `
   <div class="title">料 金 計 算 明 細</div>
   <table class="info-table" style="margin-bottom:16px;">
@@ -738,15 +759,8 @@ function printDetail() {
     <tr><td><strong>給与計算人数：</strong>${r.payroll}名</td><td></td></tr>
     <tr><td><strong>処遇改善対象人数：</strong>${r.empC}名</td><td></td></tr>
   </table>
-  <table>
-    <tr style="background:#2E4057; color:white;"><th>項目</th><th style="width:150px;" class="right">金額（税抜）</th></tr>
-    ${rows}
-    <tr><td class="right bold">小計（税抜）</td><td class="right bold">${r.subtotal.toLocaleString()}円</td></tr>
-    <tr><td class="right">消費税（10%）</td><td class="right">${r.tax.toLocaleString()}円</td></tr>
-    <tr><td class="right">源泉所得税（${r.subtotal <= 1000000 ? '10.21%' : '超過額×20.42%＋102,100円'}）</td><td class="right">△${r.gensen.toLocaleString()}円</td></tr>
-    <tr class="total-row"><td class="right bold">お振替月額（税込）</td><td class="right bold">${r.total.toLocaleString()}円</td></tr>
-  </table>
-  ${detailBreakdownHtml(r)}`;
+  ${detailBreakdownHtml(r)}
+  ${detailTotalHtml(r)}`;
 
   printHTML(html, buildPrintTitle('料金計算明細', r.clientName));
 }
