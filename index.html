@@ -609,6 +609,62 @@ function buildPrintTitle(kind, clientName, includeClient = true) {
   const client = safeFileNamePart(clientName) || '顧問先未入力';
   return office + '_' + kind + '_' + client + '様_' + y + m + d;
 }
+
+function calcStepBreakdown(count, rates) {
+  const rows = [];
+  let remaining = count;
+  let prev = 0;
+  for (const r of rates) {
+    if (remaining <= 0) break;
+    const applied = r.max ? Math.min(remaining, r.max - prev) : remaining;
+    const start = prev + 1;
+    const end = r.max ? Math.min(count, r.max) : count;
+    rows.push({ start, end, count: applied, price: r.price, amount: applied * r.price });
+    remaining -= applied;
+    if (r.max) prev = r.max;
+  }
+  return rows;
+}
+
+function stepBreakdownRowsHtml(count, rates) {
+  return calcStepBreakdown(count, rates).map(row => {
+    const range = row.start === row.end ? row.start + '名' : row.start + '～' + row.end + '名';
+    return '<tr><td>' + range + '</td><td class="right">' + row.count + '名</td><td class="right">' + row.price.toLocaleString() + '円</td><td class="right">' + row.amount.toLocaleString() + '円</td></tr>';
+  }).join('');
+}
+
+function detailBreakdownHtml(r) {
+  let html = '<div class="section">計算根拠</div>';
+  if (r.hasA) {
+    const empPrice = calcStepPrice(r.emp, ROMU_RATES);
+    html += '<table><tr style="background:#566573;color:white;"><th colspan="4">A. 労務サポート契約</th></tr>' +
+      '<tr><td>基本料</td><td class="right">1社</td><td class="right">15,000円</td><td class="right">15,000円</td></tr>' +
+      '<tr style="background:#EEF2F7;"><th>従業員数単価</th><th class="right">人数</th><th class="right">単価</th><th class="right">金額</th></tr>' +
+      stepBreakdownRowsHtml(r.emp, ROMU_RATES) +
+      '<tr><td colspan="3" class="right bold">A 小計</td><td class="right bold">' + (15000 + empPrice).toLocaleString() + '円</td></tr></table>';
+  }
+  if (r.hasB) {
+    const empPrice = calcStepPrice(r.payroll, KYUYO_RATES);
+    html += '<table><tr style="background:#566573;color:white;"><th colspan="4">B. 給与計算サポート契約</th></tr>' +
+      '<tr style="background:#EEF2F7;"><th>給与計算人数単価</th><th class="right">人数</th><th class="right">単価</th><th class="right">金額</th></tr>' +
+      stepBreakdownRowsHtml(r.payroll, KYUYO_RATES) +
+      '<tr><td colspan="3" class="right bold">B 小計</td><td class="right bold">' + empPrice.toLocaleString() + '円</td></tr></table>';
+  }
+  if (r.hasC) {
+    const base1 = r.hasA ? 5000 : 15000;
+    const baseLabel = r.hasA ? 'A契約あり基本料' : 'A契約なし基本料';
+    const cRates = r.serviceCType === 'withB' ? SHOGUU_RATES_B : (r.serviceCType === 'consultation' ? SHOGUU_RATES_CONSULTATION : SHOGUU_RATES);
+    const empPrice = calcStepPrice(r.empC, cRates);
+    html += '<table><tr style="background:#566573;color:white;"><th colspan="4">C. 処遇改善加算サポート契約</th></tr>' +
+      '<tr><td>' + baseLabel + '</td><td class="right">1社</td><td class="right">' + base1.toLocaleString() + '円</td><td class="right">' + base1.toLocaleString() + '円</td></tr>' +
+      '<tr><td>集計・根拠資料作成料</td><td class="right">1社</td><td class="right">10,000円</td><td class="right">10,000円</td></tr>' +
+      '<tr style="background:#EEF2F7;"><th>処遇改善対象人数単価（' + getShoguuRateLabel(r.hasB) + '）</th><th class="right">人数</th><th class="right">単価</th><th class="right">金額</th></tr>' +
+      stepBreakdownRowsHtml(r.empC, cRates) +
+      '<tr><td colspan="3" class="right bold">C 小計</td><td class="right bold">' + (base1 + 10000 + empPrice).toLocaleString() + '円</td></tr></table>';
+  }
+  html += '<div style="font-size:9pt; color:#555; margin-top:8px;">※月次オプションは、選択された各サービスの人数・単価に基づき計算しています。</div>';
+  return html;
+}
 // ========== 見積書 ==========
 function printEstimate() {
   if (!validateMonthlyOutput('estimate')) return;
@@ -689,7 +745,8 @@ function printDetail() {
     <tr><td class="right">消費税（10%）</td><td class="right">${r.tax.toLocaleString()}円</td></tr>
     <tr><td class="right">源泉所得税（${r.subtotal <= 1000000 ? '10.21%' : '超過額×20.42%＋102,100円'}）</td><td class="right">△${r.gensen.toLocaleString()}円</td></tr>
     <tr class="total-row"><td class="right bold">お振替月額（税込）</td><td class="right bold">${r.total.toLocaleString()}円</td></tr>
-  </table>`;
+  </table>
+  ${detailBreakdownHtml(r)}`;
 
   printHTML(html, buildPrintTitle('料金計算明細', r.clientName));
 }
