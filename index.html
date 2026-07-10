@@ -277,6 +277,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: #2E4057
   <div class="btn-group">
     <button class="btn btn-primary" onclick="printSpotEstimate()">📄 スポット見積書を印刷/PDF保存</button>
     <button class="btn btn-green" onclick="printSpotInvoice()">🧾 スポット請求書を印刷/PDF保存</button>
+    <button class="btn btn-orange" onclick="printSpotReceipt()">🧾 スポット領収書を印刷/PDF保存</button>
   </div>
 </div>
 
@@ -1354,10 +1355,10 @@ function spotDocumentHtml(kind) {
   if (!r.items || r.items.length === 0) { alert('スポット手続きの明細を追加してください'); return ''; }
   const today = new Date();
   const fmt = d => d.getFullYear() + '年' + (d.getMonth()+1) + '月' + d.getDate() + '日';
-  const heading = kind === 'invoice' ? 'ご 請 求 書' : 'お 見 積 書';
-  const amountLabel = kind === 'invoice' ? 'ご請求額(スポット報酬)' : 'お見積り額(スポット報酬)';
-  const lead = kind === 'invoice' ? '下記のとおりご請求いたします。' : '下記のとおりお見積りいたします。';
-  const note = kind === 'invoice' ? 'お支払期限：' + fmt(addDays(today, 20)) : 'お見積書の有効期限：' + fmt(addDays(today, 10));
+  const heading = kind === 'invoice' ? 'ご 請 求 書' : (kind === 'receipt' ? '領 収 書' : 'お 見 積 書');
+  const amountLabel = kind === 'invoice' ? 'ご請求額(スポット報酬)' : (kind === 'receipt' ? '領収金額(スポット報酬)' : 'お見積り額(スポット報酬)');
+  const lead = kind === 'invoice' ? '下記のとおりご請求いたします。' : (kind === 'receipt' ? '下記の金額を正に領収いたしました。' : '下記のとおりお見積りいたします。');
+  const note = kind === 'invoice' ? 'お支払期限：' + fmt(addDays(today, 20)) : (kind === 'receipt' ? '但し、スポット手続き報酬として' : 'お見積書の有効期限：' + fmt(addDays(today, 10)));
   const target = r.targetMonth ? '<br>対象年月：' + r.targetMonth : '';
   const itemRows = r.items.map(item => '<tr><td>' + item.procedure.name + '</td><td class="right">' + item.qty + '</td><td class="right">' + item.unit.toLocaleString() + '円</td><td class="right">' + item.amount.toLocaleString() + '円</td></tr>').join('');
   return '<div class="title">' + heading + '</div>' +
@@ -1387,6 +1388,11 @@ function printSpotInvoice() {
   if (!validateSpotOutput()) return;
   const html = spotDocumentHtml('invoice');
   if (html) printHTML(html, buildPrintTitle('ご請求書', spotResult.clientName));
+}
+function printSpotReceipt() {
+  if (!validateSpotOutput()) return;
+  const html = spotDocumentHtml('receipt');
+  if (html) printHTML(html, buildPrintTitle('領収書', spotResult.clientName));
 }
 
 // 初期計算
