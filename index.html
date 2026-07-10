@@ -1302,8 +1302,10 @@ function renderSpotItems() {
       '<td class="amount">' + formatYen(item.amount) + '</td><td><button class="btn" style="background:#D64545;color:white;padding:5px 8px;font-size:11px;" onclick="removeSpotItem(' + index + ')">削除</button></td></tr>';
   }).join('');
   const summary = summarizeSpotItems();
-  rows += '<tr class="tax-row"><td>小計（割引前・税抜）</td><td class="amount">' + formatYen(summary.grossSubtotal) + '</td><td></td></tr>';
-  if (summary.discount > 0) rows += '<tr class="discount-row"><td><strong>' + summary.discountLabel + '</strong></td><td class="amount"><strong>△' + formatYen(summary.discount) + '</strong></td><td></td></tr>';
+  if (summary.discount > 0) {
+    rows += '<tr class="tax-row"><td>小計（割引前・税抜）</td><td class="amount">' + formatYen(summary.grossSubtotal) + '</td><td></td></tr>';
+    rows += '<tr class="discount-row"><td><strong>' + summary.discountLabel + '</strong></td><td class="amount"><strong>△' + formatYen(summary.discount) + '</strong></td><td></td></tr>';
+  }
   rows += '<tr class="tax-row"><td>小計（税抜）</td><td class="amount">' + formatYen(summary.subtotal) + '</td><td></td></tr>';
   rows += '<tr class="tax-row"><td>消費税（10%）</td><td class="amount">' + formatYen(summary.tax) + '</td><td></td></tr>';
   rows += '<tr class="tax-row"><td>源泉所得税</td><td class="amount">△' + formatYen(summary.withholding) + '</td><td></td></tr>';
@@ -1375,8 +1377,8 @@ function spotDocumentHtml(kind) {
     '</tr></table>' +
     '<table class="doc-detail-table"><tr style="background:#2E4057; color:white;"><th>内容</th><th style="width:70px;" class="right">数量</th><th style="width:110px;" class="right">単価</th><th style="width:130px;" class="right">金額</th></tr>' +
     itemRows +
-    '<tr><td colspan="3" class="right bold">小計（割引前・税抜）</td><td class="right bold">' + r.grossSubtotal.toLocaleString() + '円</td></tr>' +
-    (r.discount > 0 ? '<tr class="discount-row"><td colspan="3" class="right"><strong>' + r.discountLabel + '</strong></td><td class="right"><strong>△' + r.discount.toLocaleString() + '円</strong></td></tr>' : '') +
+    (r.discount > 0 ? '<tr><td colspan="3" class="right bold">小計（割引前・税抜）</td><td class="right bold">' + r.grossSubtotal.toLocaleString() + '円</td></tr>' +
+    '<tr class="discount-row"><td colspan="3" class="right"><strong>' + r.discountLabel + '</strong></td><td class="right"><strong>△' + r.discount.toLocaleString() + '円</strong></td></tr>' : '') +
     '<tr><td colspan="3" class="right bold">小計（税抜）</td><td class="right bold">' + r.subtotal.toLocaleString() + '円</td></tr>' +
     '<tr><td colspan="3" class="right">消費税（10%）</td><td class="right">' + r.tax.toLocaleString() + '円</td></tr>' +
     '<tr><td colspan="3" class="right">源泉所得税</td><td class="right">△' + r.withholding.toLocaleString() + '円</td></tr>' +
