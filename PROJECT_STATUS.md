@@ -3,7 +3,8 @@
 ## 現在の状態
 
 - 正本は `public/index.html`（2026-08-06、Firebase Hosting移行に伴いリポジトリ直下の `index.html` から`git mv`で移動）。
-- `main` ブランチから Firebase Hosting（`task-app-493716`プロジェクトのサイト`saitoh-sr-estimate-contract`）で公開。GitHub Pagesは無効化済み。
+- `main` ブランチから Firebase Hosting（`task-app-493716`プロジェクトのサイト`saitoh-sr-estimate-contract`、公開URL https://saitoh-sr-estimate-contract.web.app ）へデプロイ済み（2026-08-06）。GitHub Pagesの無効化はまだ（NEXT_ACTION参照）。
+- Google Cloud Console / Firebase Console側のOAuth設定が未実施のため、現時点では公開URLでのGoogleログインは失敗する見込み（NEXT_ACTION参照）。
 - HTML/CSS/JavaScriptのみで動作するアプリ（中身は1ファイルのまま）。Firebase Authentication（Googleアカウント、`ALLOWED_EMAILS`ホワイトリスト方式）でログイン必須化。データ保存は行わない（PDF出力のみ、現状維持）。
 - 既存の料金計算・PDF出力ロジック・帳票内容は変更していない（認証機能の追加のみ）。
 - CodexとClaude Codeは対等な開発担当であり、共通Git手順と競合停止ルールを適用する。
@@ -11,8 +12,8 @@
 ## Git状態
 
 - 対象ブランチ: `main`
-- 設定整備開始時の基準コミット: `814b7ff`
-- 2026-07-13確認時点で `origin/main` と同期済み（ahead 0 / behind 0）
+- 直近コミット: `eecdd5b`（Firebase Hosting + Google認証追加）
+- 2026-08-06確認時点で `origin/main` と同期済み（ahead 0 / behind 0）
 
 ## Git管理方針
 
@@ -60,22 +61,23 @@
   - task-app / labor-notice-app / portalと同じ共有Firebaseプロジェクト（`task-app-493716`）・共有OAuthクライアントIDを再利用
   - 既存の料金計算・PDF出力ロジック（`calc()`等）・見た目は無変更
 - 新規ファイル: `firebase.json`（`public: "public"`、Hosting target `estimateContract`）、`.firebaserc`（サイト`saitoh-sr-estimate-contract`にマッピング）
-- GitHub Pages（`hiro-saitoh-sr.github.io/estimate-contract-app`）は無効化した。
+- Firebase Hostingサイト`saitoh-sr-estimate-contract`を作成し、デプロイ完了（2026-08-06、`firebase deploy --only hosting:estimateContract --project task-app-493716`。「found 1 files in public」でindex.html以外は含まれないことを確認）。
+- デプロイ後の確認（2026-08-06実施）: 公開URL直下は200、`outputs/`・`PROJECT_STATUS.md`・`見積契約書作成.html`・`firebase.json`はいずれも404で参照不可。COOPヘッダー（`same-origin-allow-popups`）付与も確認。ページHTML内に`#loginScreen`・`#appShell`・`ALLOWED_EMAILS`の記述があることも確認。
+- GitHub Pages（`hiro-saitoh-sr.github.io/estimate-contract-app`）の無効化はまだ実施していない（`gh` CLI未導入のため、利用者がGitHub Web UIで実施する必要がある）。
 
 ## NEXT_ACTION
 
-- Firebase Hostingサイト`saitoh-sr-estimate-contract`を新規作成し、`firebase deploy --only hosting:estimateContract --project task-app-493716`でデプロイする（利用者の`firebase login --reauth`後に実施）。
-- デプロイ後、`public/`配下以外のファイル（`*.docx`・`outputs/`等）が公開URLから参照できない（404になる）ことを確認する。
 - 利用者にGoogle Cloud Console / Firebase Console側の設定（portal導入時と同じ3点）を依頼する:
   1. OAuthクライアント（`714632380111-...`、共用）の「承認済みのJavaScript生成元」に `https://saitoh-sr-estimate-contract.web.app` を追加
   2. 共有APIキーのHTTPリファラー許可リストに `https://saitoh-sr-estimate-contract.web.app/*` を追加
   3. Firebase Authenticationの「承認済みドメイン」に `saitoh-sr-estimate-contract.web.app` を追加
-- 上記未設定の場合、ログイン時に`auth/requests-from-referer-...-are-blocked`等のエラーになる可能性が高い（portalと同じ既知の課題）。
+- 上記未設定の場合、ログイン時に`auth/requests-from-referer-...-are-blocked`等のエラーになる可能性が高い（portalと同じ既知の課題）。上記設定後に実ブラウザでログインを確認する。
 - GitHub Pages（リポジトリ Settings → Pages → Source）を「None」に変更する。
 - 実ブラウザで `hiro@saitoh-sr.com` / `kawahara@saitoh-sr.com` によるログイン、既存の全機能（見積書・契約書5パターン・料金計算明細・手続き料金表・スポット見積書/請求書/領収書のPDF出力）が移行前と同じ挙動であることを確認する。
+- ホワイトリスト外アカウントでのログインが拒否されることを確認する。
 
 ## 最終更新
 
 - 最終更新AI: Claude Code
 - 最終更新日時: 2026-08-06（日本時間）
-- 変更内容: Firebase Hosting + Google認証（ホワイトリスト方式）を追加。正本を`public/index.html`へ移動。`firebase.json`/`.firebaserc`を新規作成。既存の料金計算・PDF出力ロジックは無変更。デプロイ・OAuth設定・GitHub Pages無効化は未実施（NEXT_ACTION参照）。
+- 変更内容: Firebase Hosting + Google認証（ホワイトリスト方式）を追加し、Firebase Hostingサイト`saitoh-sr-estimate-contract`を作成・デプロイ完了。正本を`public/index.html`へ移動。`firebase.json`/`.firebaserc`を新規作成。既存の料金計算・PDF出力ロジックは無変更。OAuth設定・GitHub Pages無効化・実ブラウザでのログイン確認は未実施（NEXT_ACTION参照）。
