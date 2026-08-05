@@ -6,14 +6,16 @@
 
 ## 公開URL・リポジトリ
 
-- 公開URL: https://hiro-saitoh-sr.github.io/estimate-contract-app/
+- 公開URL: https://saitoh-sr-estimate-contract.web.app（Firebase Hosting）
 - リポジトリ: https://github.com/hiro-saitoh-sr/estimate-contract-app
+- GitHub Pages（旧公開先 https://hiro-saitoh-sr.github.io/estimate-contract-app/ ）はFirebase Hosting移行に伴い無効化済み。
 
 ## 開発・管理方針
 
 - Claude CodeとCodexを対等な開発担当として使用する。
-- 正本HTMLはリポジトリ直下の `index.html`。
-- HTML/CSS/JavaScriptの単体HTMLアプリで、Firebaseは使用せず、ログインは不要。
+- 正本HTMLは `public/index.html`（旧: リポジトリ直下の `index.html`。Firebase Hosting移行に伴い`public/`配下へ移動）。
+- HTML/CSS/JavaScriptの単体HTMLアプリ（中身は1ファイルのまま）。Firebase Hosting（`task-app-493716`に相乗り）＋ Firebase Authentication（Googleアカウント、ホワイトリスト方式）でログイン必須。データ保存は行わない（PDF出力のみ）。
+- 許可アカウントの追加・削除は `public/index.html` 内 `ALLOWED_EMAILS` 配列を編集する。
 - 変更対象を確認し、対象ファイルだけを個別にステージしてコミット・pushする。
 - コミットメッセージは日本語で、`feat: `、`fix: `、`docs: ` 等のプレフィックスを付ける。
 - OneDrive上のHTMLは利用用コピーであり、正本ではない。
@@ -37,7 +39,9 @@
 
 ## Git管理対象
 
-- `index.html`
+- `public/index.html`
+- `firebase.json`
+- `.firebaserc`
 - `README.md`
 - `.nojekyll`
 - `AGENTS.md`

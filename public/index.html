@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>社会保険労務士齊藤事務所 見積・契約書作成</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Helvetica Neue', 'Arial', 'Hiragino Sans', 'Meiryo', sans-serif; background: #e8edf2; color: #1a2433; font-size: 15px; }
@@ -54,9 +57,38 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: #2E4057
 .spot-item-main { font-weight: bold; color: #1a2433; font-size: 15px; }
 .spot-item-meta { font-size: 13px; color: #4a5568; margin-top: 4px; }
 .spot-item-manual { color: #8A5A00; }
+.login-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #e8edf2; padding: 20px; }
+.login-card { background: white; border-radius: 10px; padding: 40px 36px; box-shadow: 0 2px 10px rgba(0,0,0,0.09); text-align: center; max-width: 360px; width: 100%; }
+.login-emoji { font-size: 40px; margin-bottom: 8px; }
+.login-title { font-size: 19px; font-weight: bold; color: #2E4057; margin-bottom: 4px; }
+.login-office { font-size: 13px; color: #4a5568; margin-bottom: 20px; }
+.login-instruction { font-size: 14px; color: #1a2433; margin-bottom: 16px; }
+.gsi-button-target { display: flex; justify-content: center; margin-bottom: 12px; }
+.login-status { font-size: 13px; color: #4a5568; margin-top: 10px; }
+.login-error { font-size: 13px; color: #9B1C1C; margin-top: 10px; }
+.auth-bar { display: flex; justify-content: flex-end; align-items: center; gap: 14px; background: #1a2433; color: white; padding: 8px 32px; font-size: 13px; }
+.auth-signout-btn { background: none; border: 1px solid rgba(255,255,255,0.5); color: white; border-radius: 4px; padding: 4px 12px; font-size: 12px; cursor: pointer; }
+.auth-signout-btn:hover { opacity: 0.8; }
 </style>
 </head>
 <body>
+<div id="loginScreen" class="login-screen">
+  <div class="login-card">
+    <div class="login-emoji">🧾</div>
+    <h1 class="login-title">見積・契約書作成システム</h1>
+    <p class="login-office">社会保険労務士齊藤事務所</p>
+    <p class="login-instruction">Googleアカウントでログイン</p>
+    <div id="gsiButtonTarget" class="gsi-button-target"></div>
+    <p id="loginStatus" class="login-status" hidden></p>
+    <p id="loginError" class="login-error" hidden></p>
+  </div>
+</div>
+
+<div id="appShell" hidden>
+<div class="auth-bar">
+  <span id="authUserLabel"></span>
+  <button id="signOutBtn" type="button" class="auth-signout-btn">ログアウト</button>
+</div>
 <div class="header">
   <h1>社会保険労務士齊藤事務所　見積・契約書作成システム</h1>
   <p>料金自動計算 → 見積書・契約書PDF出力</p>
@@ -285,6 +317,109 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: #2E4057
 
 <!-- 印刷用コンテンツ（非表示） -->
 <div id="printContent" style="display:none;"></div>
+
+</div><!-- /#appShell -->
+
+<script>
+// ========== 認証（Googleアカウント + ホワイトリスト） ==========
+const firebaseConfig = {
+  apiKey: "AIzaSyCPnCda2xdHc5jOLEbNT0yVV4yrJddtmJw",
+  authDomain: "task-app-493716.firebaseapp.com",
+  projectId: "task-app-493716",
+  appId: "1:714632380111:web:8daa412c877c12358c81ba",
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+
+// アクセスを許可するメールアドレス。追加・削除はこの配列を編集する。
+const ALLOWED_EMAILS = ["hiro@saitoh-sr.com", "kawahara@saitoh-sr.com"];
+
+// task-app/labor-notice-app/portalと同じGoogle OAuthクライアントIDを再利用する。
+const GSI_CLIENT_ID = "714632380111-0a9qleqctdripon18t664rsdoafiiq9f.apps.googleusercontent.com";
+
+function decodeJwt(token) {
+  try {
+    const payload = token.split(".")[1];
+    const binary = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
+    const utf8str = decodeURIComponent(
+      binary.split("").map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)).join("")
+    );
+    const decoded = JSON.parse(utf8str);
+    return { name: decoded.name || decoded.email, email: decoded.email, picture: decoded.picture || "" };
+  } catch (e) {
+    return null;
+  }
+}
+
+function waitForGoogleScript(timeoutMs) {
+  timeoutMs = timeoutMs || 10000;
+  return new Promise((resolve, reject) => {
+    const start = Date.now();
+    (function poll() {
+      if (window.google && window.google.accounts && window.google.accounts.id) { resolve(); return; }
+      if (Date.now() - start > timeoutMs) { reject(new Error("Googleログインスクリプトの読み込みに失敗しました。")); return; }
+      setTimeout(poll, 150);
+    })();
+  });
+}
+
+function setLoginStatus(msg) {
+  const el = document.getElementById('loginStatus');
+  if (!msg) { el.hidden = true; return; }
+  el.hidden = false; el.textContent = msg;
+}
+function setLoginError(msg) {
+  const el = document.getElementById('loginError');
+  if (!msg) { el.hidden = true; return; }
+  el.hidden = false; el.textContent = msg;
+}
+
+function handleCredential(response) {
+  setLoginError("");
+  setLoginStatus("認証中...");
+  const user = decodeJwt(response.credential);
+  if (!user) { setLoginStatus(""); setLoginError("認証情報の取得に失敗しました。"); return; }
+  if (!ALLOWED_EMAILS.includes(user.email)) {
+    setLoginStatus("");
+    setLoginError(`このアカウント（${user.email}）はアクセスが許可されていません。`);
+    if (window.google) window.google.accounts.id.disableAutoSelect();
+    return;
+  }
+  const credential = firebase.auth.GoogleAuthProvider.credential(response.credential);
+  auth.signInWithCredential(credential).catch((e) => {
+    setLoginStatus("");
+    setLoginError("Firebase認証エラー: " + e.message);
+  });
+}
+
+waitForGoogleScript()
+  .then(() => {
+    window.google.accounts.id.initialize({ client_id: GSI_CLIENT_ID, callback: handleCredential, auto_select: false });
+    window.google.accounts.id.renderButton(document.getElementById('gsiButtonTarget'), {
+      theme: "outline", size: "large", text: "signin_with", locale: "ja", width: 320,
+    });
+  })
+  .catch((e) => setLoginError(e.message));
+
+auth.onAuthStateChanged((fbUser) => {
+  const loginScreen = document.getElementById('loginScreen');
+  const appShell = document.getElementById('appShell');
+  if (!fbUser || !fbUser.email || !ALLOWED_EMAILS.includes(fbUser.email)) {
+    if (fbUser) auth.signOut();
+    appShell.hidden = true;
+    loginScreen.hidden = false;
+    return;
+  }
+  document.getElementById('authUserLabel').textContent = fbUser.displayName ? `${fbUser.displayName}（${fbUser.email}）` : fbUser.email;
+  loginScreen.hidden = true;
+  appShell.hidden = false;
+});
+
+document.getElementById('signOutBtn').addEventListener('click', () => {
+  if (window.google && window.google.accounts) window.google.accounts.id.disableAutoSelect();
+  auth.signOut();
+});
+</script>
 
 <script>
 // ========== 料金計算 ==========

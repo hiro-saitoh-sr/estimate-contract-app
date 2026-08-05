@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "task-app-493716"
+  },
+  "targets": {
+    "task-app-493716": {
+      "hosting": {
+        "estimateContract": [
+          "saitoh-sr-estimate-contract"
+        ]
+      }
+    }
+  }
+}

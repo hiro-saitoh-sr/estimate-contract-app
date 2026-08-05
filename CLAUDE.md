@@ -2,15 +2,16 @@
 
 ## 作業対象
 
-- 正本はリポジトリ直下の `index.html`。
-- HTML/CSS/JavaScriptで構成された単体HTMLアプリ。
-- Firebase認証とログイン機能は現時点で未実装。
+- 正本は `public/index.html`（旧: リポジトリ直下の `index.html`。Firebase Hosting移行に伴い`public/`配下へ移動）。
+- HTML/CSS/JavaScriptで構成された単体HTMLアプリ（中身は1ファイルのまま）。
+- Firebase Hosting（既存プロジェクト`task-app-493716`に相乗り）＋ Firebase Authentication（Googleアカウント、ホワイトリスト方式）でログイン必須化済み。データ保存は行わない（PDF出力のみ）。
+- 許可アカウントの追加・削除は `public/index.html` 内 `ALLOWED_EMAILS` 配列を編集する。
 - OneDrive上のHTMLは利用用コピーであり、正本ではない。
 
 ## 作業ルール
 
 - Claude CodeとCodexを対等な開発担当として使用する。
-- 修正は正本の `index.html` に対して行う。
+- 修正は正本の `public/index.html` に対して行う。
 - 日付はすべて西暦で表記する。
 - 個人名を使わず、「正社員さん」「パートさん」で統一する。
 - 変更対象を確認し、対象ファイルだけを個別にステージしてコミット・pushする。
@@ -33,7 +34,9 @@
 
 ## Git管理対象
 
-- `index.html`
+- `public/index.html`
+- `firebase.json`
+- `.firebaserc`
 - `README.md`
 - `.nojekyll`
 - `AGENTS.md`
@@ -53,5 +56,15 @@
 
 ## 公開先
 
-- 公開URL: https://hiro-saitoh-sr.github.io/estimate-contract-app/
+- 公開URL: https://saitoh-sr-estimate-contract.web.app（Firebase Hosting）
 - リポジトリ: https://github.com/hiro-saitoh-sr/estimate-contract-app
+- GitHub Pages（旧公開先 https://hiro-saitoh-sr.github.io/estimate-contract-app/ ）はFirebase Hosting移行に伴い無効化済み。
+
+## Firebase設定
+
+- プロジェクトID: `task-app-493716`（task-app・labor-notice-app・portalと共有）
+- Hosting target: `estimateContract` → サイト `saitoh-sr-estimate-contract`（`.firebaserc`）
+- `public/` フォルダのみをHosting公開対象とする（`*.docx`・料金表Excel・`outputs/`・`work/`等の非公開資料は`public/`外に置き、絶対に含めない）
+- ログイン許可アカウント: `public/index.html` 内 `ALLOWED_EMAILS`
+- OAuthクライアントID・Firebase設定値（apiKey等）はtask-app / labor-notice-app / portalと共用（値は公開情報のクライアント側キー）
+- Firestore・Realtime Databaseは使用しない（認証のみ、データ保存なし）
