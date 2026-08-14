@@ -8,6 +8,7 @@
 - HTML/CSS/JavaScriptのみで動作するアプリ（中身は1ファイルのまま）。Firebase Authentication（Googleアカウント、`ALLOWED_EMAILS`ホワイトリスト方式）でログイン必須化。データ保存は行わない（PDF出力のみ、現状維持）。
 - 既存の料金計算・PDF出力ロジック・帳票内容は変更していない（認証機能の追加のみ）。
 - `printFeeTable()`（月次報酬一覧・手続き料金表の印刷/PDF出力）に印刷専用スタイル（`feeTableStyle`）を追加し、2ページ以内に収まるよう調整（2026-08-14）。金額・帳票項目・計算ロジックの変更はなし。
+- 業務委託契約書テンプレート（`getContract1`〜`5`）を改訂（2026-08-14）。条番号の重複・抜けを整理し「報酬の改定」条を新設、【労務サポート契約の確認事項】【処遇改善加算サポート契約の確認事項】に文言を追記、署名欄から甲側の押印欄（代表者空白行）を削除して電子署名のみの形式に統一。料金計算ロジックは変更なし。
 - CodexとClaude Codeは対等な開発担当であり、共通Git手順と競合停止ルールを適用する。
 
 ## Git状態
@@ -81,8 +82,9 @@
 
 - 最終更新AI: Claude Code
 - 最終更新日時: 2026-08-14（日本時間）
-- 変更内容: `printFeeTable()`に印刷専用スタイル（`feeTableStyle`）を追加し、月次報酬一覧・手続き料金表の印刷/PDF出力が2ページ以内に収まるよう調整。金額・帳票項目・計算ロジックの変更はなし。コミット`d6bf14a`をpush後、Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ完了（`found 1 files in public`でindex.html以外は含まれないことを確認）。
+- 変更内容: 業務委託契約書テンプレート（`getContract1`〜`5`）を改訂。①条番号を1から連番で整理（新設の「報酬の改定」条を含め、重複・抜けを解消）、②「補足」を条番号なし・背景色なしの`.section-note`表記（［補足］）に変更、③【労務サポート契約の確認事項】に台帳登録変更時の文言を追記、④【処遇改善加算サポート契約の確認事項】に健康保険料・介護保険料合算表示時の取り扱いを追記、⑤共通確認事項の後・契約期間の前に「報酬の改定」条（改定日の２ヶ月前までに書面又は電磁的方法により通知）を新設、⑥署名欄の甲側「代表者」空白行（押印欄）を削除し電子署名のみの形式に統一（乙側の「代表者　齊藤 広幸」は維持）。5パターン全てに適用。料金計算・PDF出力ロジックは変更なし。ブラウザでの目視確認後、コミット・push・Firebase Hostingへのデプロイを実施。
 
 ### 過去の更新
 
+- 2026-08-14（Claude Code）: `printFeeTable()`に印刷専用スタイル（`feeTableStyle`）を追加し、月次報酬一覧・手続き料金表の印刷/PDF出力が2ページ以内に収まるよう調整。金額・帳票項目・計算ロジックの変更はなし。コミット`d6bf14a`をpush後、Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ完了（`found 1 files in public`でindex.html以外は含まれないことを確認）。
 - 2026-08-06（Claude Code）: Firebase Hosting + Google認証（ホワイトリスト方式）を追加し、Firebase Hostingサイト`saitoh-sr-estimate-contract`を作成・デプロイ完了。正本を`public/index.html`へ移動。`firebase.json`/`.firebaserc`を新規作成。既存の料金計算・PDF出力ロジックは無変更。OAuth設定・GitHub Pages無効化・実ブラウザでのログイン確認は未実施（NEXT_ACTION参照）。

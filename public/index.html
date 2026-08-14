@@ -702,6 +702,7 @@ function printHTML(html, title = '見積書・契約書') {
     .info-table { border: none; margin-bottom: 18px; }
     .info-table td { border: none; padding: 3px 8px; background: #fff !important; }
     .section { margin: 18px 0 8px; padding: 6px 8px; font-weight: bold; color: #102A43; background: #EAF2F8; border-left: 5px solid #2E4057; border-bottom: none; page-break-after: avoid; }
+    .section-note { margin: 18px 0 8px; padding: 4px 2px; font-weight: bold; font-style: italic; color: #52606D; border-top: 1px dashed #9AA5B1; border-bottom: 1px dashed #9AA5B1; page-break-after: avoid; }
     .total-row td { background: #FFF4CC !important; font-weight: bold; font-size: 11.5pt; }
     .discount-row td { background: #FDEBEC !important; color: #9B1C1C; font-weight: bold; }
     .footer { margin-top: 32px; }
@@ -977,7 +978,7 @@ function signatureBlock(clientName, startDate, toW) {
     <p>以上、契約成立の証として、本契約書はオフィスステーションサインによる電子署名により締結します。</p>
     <p style="margin-top:16px;">${toW(startDate)}</p>
     <table class="sign-table" style="margin-top:24px;">
-      <tr><td><strong>（甲）</strong><br><br>住所　${postal}<br>　　　${address}<br><br>社名　${name}<br><br>代表者</td></tr>
+      <tr><td><strong>（甲）</strong><br><br>住所　${postal}<br>　　　${address}<br><br>社名　${name}</td></tr>
       <tr><td><strong>（乙）</strong><br><br>住所　〒174-0072<br>　　　東京都板橋区南常盤台1-22-7-402<br><br>社名　社会保険労務士齊藤事務所<br><br>代表者　齊藤 広幸</td></tr>
     </table>
   </div>`;
@@ -986,7 +987,12 @@ function signatureBlock(clientName, startDate, toW) {
 function contractNoteHtml(r) {
   const note = (r.contractNote || '').trim();
   if (!note) return '';
-  return '<div class="section">補足</div><p>' + escapeHtml(note).replace(/\r?\n/g, '<br>') + '</p>';
+  return '<div class="section-note">［補足］</div><p>' + escapeHtml(note).replace(/\r?\n/g, '<br>') + '</p>';
+}
+
+function feeRevisionHtml(articleNo) {
+  return '<div class="section">' + articleNo + '．報酬の改定</div>' +
+    '<p>乙は、報酬額を改定する場合、甲に対して改定日の２ヶ月前までに書面又は電磁的方法により通知するものとします。</p>';
 }
 
 function commonLegalClauses(startArticle) {
@@ -1020,7 +1026,7 @@ function laborClauseHtml(articleNo) {
     '<p><strong>【労務サポート契約の業務範囲】</strong></p>',
     '<p>（１）労働保険、社会保険、労務関係に関するご相談、質疑応答<br>（２）人事労務関係書類のひな型のご提供（労働条件通知書など）<br>（３）就業規則、社内規程の運用に関するご相談（作成や改訂のご依頼は別途お見積りとなります）<br>（４）労務関係の情報提供（情報提供ツールからメール配信）<br>（５）労働局、労働基準監督署、ハローワーク、年金事務所へ行う手続き</p>',
     '<p><strong>【労務サポート契約の確認事項】</strong></p>',
-    '<p>・上記１-（５）の手続きは、手続き料金表に基づき別途ご請求となります<br>・従業員情報等の共有はオフィスステーションをご使用いただきます<br>・台帳登録を甲で行う場合１名あたり110円(税込み)<br>・台帳登録を乙で行う場合１名あたり220円(税込み)<br>・社会保険労務士の範囲外に関することは他士業等をご紹介いたしますのでご相談ください</p>'
+    '<p>・上記１-（５）の手続きは、手続き料金表に基づき別途ご請求となります<br>・従業員情報等の共有はオフィスステーションをご使用いただきます<br>・台帳登録を甲で行う場合１名あたり110円（税込み）、台帳登録を乙で行う場合１名あたり220円（税込み）。契約後に甲による登録が困難となった場合は、翌月より乙による登録（220円/名）に変更となります。<br>・社会保険労務士の範囲外に関することは他士業等をご紹介いたしますのでご相談ください</p>'
   ].join('');
 }
 
@@ -1040,7 +1046,7 @@ function treatmentClauseHtml(articleNo) {
     '<p><strong>【処遇改善加算サポート契約の業務範囲】</strong></p>',
     '<p>（１）処遇改善加算に関する相談、助言、質疑応答<br>（２）処遇改善計画書及び実績報告書の作成サポート（別途課金があります）<br>（３）上記（２）に関する行政機関からの問い合わせ対応<br>（４）上記（２）の作成に必要な情報の集計作業及び根拠資料の作成<br>（５）年度途中に新規事業所を追加で申請する場合の計画書の作成サポート<br>（６）年度途中で区分変更を行う場合の計画書の作成サポート</p>',
     '<p><strong>【処遇改善加算サポート契約の確認事項】</strong></p>',
-    '<p>・処遇改善計画書の作成月（２月）、実績報告書の作成月（７月）は、報酬額の合計１か月相当額を別途課金させていただきます。介護保険、障害福祉の両方の申請がある場合は1.5か月相当額の課金となります。<br>・キャリアパス要件の作成、見直しは別途お見積りさせていただきます。<br>・指定権者への提出は甲にて行っていただきます。<br>・書類作成のサポートは計画書、実績報告書に限ります。<br>・加算届、体制状況一覧などはサポート対象外となります。</p>'
+    '<p>・処遇改善計画書の作成月（２月）、実績報告書の作成月（７月）は、報酬額の合計１か月相当額を別途課金させていただきます。介護保険、障害福祉の両方の申請がある場合は1.5か月相当額の課金となります。<br>・キャリアパス要件の作成、見直しは別途お見積りさせていただきます。<br>・指定権者への提出は甲にて行っていただきます。<br>・書類作成のサポートは計画書、実績報告書に限ります。<br>・加算届、体制状況一覧などはサポート対象外となります。<br>・支給控除一覧等で健康保険料と介護保険料が合算表示されている場合、集計上は健康保険料のみを法定福利費として取り扱います。</p>'
   ].join('');
 }
 
@@ -1073,9 +1079,10 @@ function getContract1(r, toW) {
     '<p style="margin-bottom:16px;">' + (r.clientName || '　　　　　　　　　　　　') + '（以下、甲という）は、社会保険労務士齊藤事務所（以下、乙という）に対し、以下の事項を承認の上、業務委託契約を締結します。</p>',
     laborClauseHtml(1),
     commonConfirmationHtml(2),
-    contractPeriodHtml(3, r, toW),
-    cancellationHtml(4),
-    '<div class="section">5．報酬額 ※表示額は税抜きです。</div>',
+    feeRevisionHtml(3),
+    contractPeriodHtml(4, r, toW),
+    cancellationHtml(5),
+    '<div class="section">6．報酬額 ※表示額は税抜きです。</div>',
     '<table><tr><td>労務サポート契約基本料</td><td class="right">月額 15,000円</td></tr><tr><td>従業員数（月次サービス一覧A参照）' + emp + '名</td><td class="right">月額 ' + empPrice.toLocaleString() + '円</td></tr><tr class="total-row"><td class="bold">合計</td><td class="right bold">月額 ' + totalA.toLocaleString() + '円</td></tr></table>',
     '<p style="font-size:9pt; margin-top:6px;">※対象従業員数は労働保険年度更新、算定基礎届の対象人数に基づき、毎年８月１日から７月３１日まで適用となります。</p>',
     contractNoteHtml(r),
@@ -1096,8 +1103,9 @@ function getContract2(r, toW) {
     laborClauseHtml(1),
     payrollClauseHtml(2),
     commonConfirmationHtml(3),
-    contractPeriodHtml(4, r, toW),
-    cancellationHtml(5),
+    feeRevisionHtml(4),
+    contractPeriodHtml(5, r, toW),
+    cancellationHtml(6),
     '<div class="section">7．報酬額 ※表示額は税抜きです。</div>',
     '<p><strong>【労務サポート契約の報酬額】</strong></p>',
     '<table><tr><td>労務サポート契約基本料</td><td class="right">月額 15,000円</td></tr><tr><td>従業員数（月次サービス一覧A参照）' + emp + '名</td><td class="right">月額 ' + empPriceA.toLocaleString() + '円</td></tr><tr class="total-row"><td class="bold">合計</td><td class="right bold">月額 ' + totalA.toLocaleString() + '円</td></tr></table>',
@@ -1106,7 +1114,7 @@ function getContract2(r, toW) {
     '<table><tr class="total-row"><td class="bold">給与計算人数（月次サービス一覧B参照）' + payroll + '名</td><td class="right bold">月額 ' + empPriceB.toLocaleString() + '円</td></tr></table>',
     '<p style="font-size:9pt; margin-top:6px;">※給与計算を行った人数により報酬額を決定いたしますので、従業員の入退職により変動します。</p>',
     contractNoteHtml(r),
-    commonLegalClauses(7),
+    commonLegalClauses(8),
     signatureBlock(r.clientName, r.contractStart, toW)
   ].join('');
 }
@@ -1122,13 +1130,14 @@ function getContract3(r, toW) {
     '<p style="margin-bottom:16px;">' + (r.clientName || '　　　　　　　　　　　　') + '（以下、甲という）は、社会保険労務士齊藤事務所（以下、乙という）に対し、以下の事項を承認の上、業務委託契約を締結します。</p>',
     treatmentClauseHtml(1),
     commonConfirmationHtml(2),
-    contractPeriodHtml(3, r, toW),
-    cancellationHtml(4),
-    '<div class="section">5．報酬額 ※表示額は税抜きです。</div>',
+    feeRevisionHtml(3),
+    contractPeriodHtml(4, r, toW),
+    cancellationHtml(5),
+    '<div class="section">6．報酬額 ※表示額は税抜きです。</div>',
     '<table><tr><td>処遇改善加算サポート基本料（Aの契約なし）</td><td class="right">月額 15,000円</td></tr><tr><td>計画書、報告書作成に要する集計及び根拠資料の作成</td><td class="right">月額 10,000円</td></tr><tr><td>処遇改善対象人数（月次サービス一覧C参照）' + emp + '名（' + rateLabel + '）</td><td class="right">月額 ' + empPrice.toLocaleString() + '円</td></tr><tr class="total-row"><td class="bold">合計</td><td class="right bold">月額 ' + (cBase1 + cBase2 + empPrice).toLocaleString() + '円</td></tr></table>',
     '<p style="font-size:9pt; margin-top:6px;">※対象従業員数は実績報告時の集計人数により決定し、毎年８月１日から７月３１日まで適用となります。</p>',
     contractNoteHtml(r),
-    commonLegalClauses(6),
+    commonLegalClauses(7),
     signatureBlock(r.clientName, r.contractStart, toW)
   ].join('');
 }
@@ -1147,9 +1156,10 @@ function getContract4(r, toW) {
     laborClauseHtml(1),
     treatmentClauseHtml(2),
     commonConfirmationHtml(3),
-    contractPeriodHtml(4, r, toW),
-    cancellationHtml(5),
-    '<div class="section">6．報酬額 ※表示額は税抜きです。</div>',
+    feeRevisionHtml(4),
+    contractPeriodHtml(5, r, toW),
+    cancellationHtml(6),
+    '<div class="section">7．報酬額 ※表示額は税抜きです。</div>',
     '<p><strong>【労務サポート契約の報酬額】</strong></p>',
     '<table><tr><td>労務サポート契約基本料</td><td class="right">月額 15,000円</td></tr><tr><td>従業員数（月次サービス一覧A参照）' + emp + '名</td><td class="right">月額 ' + empPriceA.toLocaleString() + '円</td></tr><tr class="total-row"><td class="bold">合計</td><td class="right bold">月額 ' + totalA.toLocaleString() + '円</td></tr></table>',
     '<p style="font-size:9pt; margin-top:6px;">※対象従業員数は労働保険年度更新、算定基礎届の対象人数に基づき、毎年８月１日から７月３１日まで適用となります。</p>',
@@ -1157,7 +1167,7 @@ function getContract4(r, toW) {
     '<table><tr><td>処遇改善加算サポート基本料(2-(1)の業務)</td><td class="right">月額 5,000円</td></tr><tr><td>計画書、報告書作成に要する集計及び根拠資料の作成(2-(2)～(6)の業務)</td><td class="right">月額 10,000円</td></tr><tr><td>処遇改善対象人数（月次サービス一覧C参照）' + empC + '名（' + rateLabelC + '）</td><td class="right">月額 ' + empPriceC.toLocaleString() + '円</td></tr><tr class="total-row"><td class="bold">合計</td><td class="right bold">月額 ' + totalC.toLocaleString() + '円</td></tr></table>',
     '<p style="font-size:9pt; margin-top:6px;">※対象従業員数は実績報告時の集計人数により決定し、毎年８月１日から７月３１日まで適用となります。</p>',
     contractNoteHtml(r),
-    commonLegalClauses(6),
+    commonLegalClauses(8),
     signatureBlock(r.clientName, r.contractStart, toW)
   ].join('');
 }
@@ -1178,7 +1188,7 @@ function getContract5(r, toW) {
     '<p><strong>【労務サポート契約の業務範囲】</strong></p>',
     '<p>（１）労働保険、社会保険、労務関係に関するご相談、質疑応答<br>（２）人事労務関係書類のひな型のご提供（労働条件通知書など）<br>（３）就業規則、社内規程の運用に関するご相談（作成や改訂のご依頼は別途お見積りとなります）<br>（４）労務関係の情報提供（情報提供ツールからメール配信）<br>（５）労働局、労働基準監督署、ハローワーク、年金事務所へ行う手続き</p>',
     '<p><strong>【労務サポート契約の確認事項】</strong></p>',
-    '<p>・上記１-（５）の手続きは、手続き料金表に基づき別途ご請求となります<br>・従業員情報等の共有はオフィスステーションをご使用いただきます<br>・台帳登録を甲で行う場合１名あたり110円(税込み)、台帳登録を乙で行う場合１名あたり220円(税込み)<br>・社会保険労務士の範囲外に関することは他士業等をご紹介いたしますのでご相談ください</p>',
+    '<p>・上記１-（５）の手続きは、手続き料金表に基づき別途ご請求となります<br>・従業員情報等の共有はオフィスステーションをご使用いただきます<br>・台帳登録を甲で行う場合１名あたり110円（税込み）、台帳登録を乙で行う場合１名あたり220円（税込み）。契約後に甲による登録が困難となった場合は、翌月より乙による登録（220円/名）に変更となります。<br>・社会保険労務士の範囲外に関することは他士業等をご紹介いたしますのでご相談ください</p>',
     '<div class="section">2．給与計算サポート契約</div>',
     '<p><strong>【給与計算サポート契約の業務範囲】</strong></p>',
     '<p>（１）月次給与の支給額、控除額の計算<br>（２）給与明細書、支給控除一覧表の作成<br>（３）賞与の支給額、控除額の計算（別途費用を頂戴いたします）</p>',
@@ -1188,14 +1198,15 @@ function getContract5(r, toW) {
     '<p><strong>【処遇改善加算サポート契約の業務範囲】</strong></p>',
     '<p>（１）処遇改善加算に関する相談、助言、質疑応答<br>（２）処遇改善計画書及び実績報告書の作成サポート（別途課金があります）<br>（３）上記（２）に関する行政機関からの問い合わせ対応<br>（４）上記（２）の作成に必要な情報の集計作業及び根拠資料の作成<br>（５）年度途中に新規事業所を追加で申請する場合の計画書の作成サポート<br>（６）年度途中で区分変更を行う場合の計画書の作成サポート</p>',
     '<p><strong>【処遇改善加算サポート契約の確認事項】</strong></p>',
-    '<p>・処遇改善計画書の作成月（２月）、実績報告書の作成月（７月）は、報酬額の合計１か月相当額を別途課金させていただきます。介護保険、障害福祉の両方の申請がある場合は1.5か月相当額の課金となります。<br>・キャリアパス要件の作成、見直しは別途お見積りさせていただきます。<br>・指定権者への提出は甲にて行っていただきます。<br>・書類作成のサポートは計画書、実績報告書に限ります。<br>・加算届、体制状況一覧などはサポート対象外となります。</p>',
+    '<p>・処遇改善計画書の作成月（２月）、実績報告書の作成月（７月）は、報酬額の合計１か月相当額を別途課金させていただきます。介護保険、障害福祉の両方の申請がある場合は1.5か月相当額の課金となります。<br>・キャリアパス要件の作成、見直しは別途お見積りさせていただきます。<br>・指定権者への提出は甲にて行っていただきます。<br>・書類作成のサポートは計画書、実績報告書に限ります。<br>・加算届、体制状況一覧などはサポート対象外となります。<br>・支給控除一覧等で健康保険料と介護保険料が合算表示されている場合、集計上は健康保険料のみを法定福利費として取り扱います。</p>',
     commonConfirmationHtml(4),
-    '<div class="section">5．契約期間</div>',
+    feeRevisionHtml(5),
+    '<div class="section">6．契約期間</div>',
     '<p>' + toW(r.contractStart) + ' ～ ' + toW(r.contractEnd) + '</p>',
     '<p>※期間終了日の２ヶ月前までに解約の意思表示がない場合は自動更新といたします。</p>',
-    '<div class="section">6．中途解約</div>',
+    '<div class="section">7．中途解約</div>',
     '<p>本契約の当事者は、本契約の有効期間であっても、解約日の２か月前までに相手方に対する書面又は電磁的方法による通知により、本契約の全部又は一部を解約することができます。</p>',
-    '<div class="section">6．報酬額 ※表示額は税抜きです。</div>',
+    '<div class="section">8．報酬額 ※表示額は税抜きです。</div>',
     '<p><strong>【労務サポート契約の報酬額】</strong></p>',
     '<table><tr><td>労務サポート契約基本料</td><td class="right">月額 15,000円</td></tr><tr><td>従業員数（月次サービス一覧A参照）' + emp + '名</td><td class="right">月額 ' + empPriceA.toLocaleString() + '円</td></tr><tr class="total-row"><td class="bold">合計</td><td class="right bold">月額 ' + totalA.toLocaleString() + '円</td></tr></table>',
     '<p style="font-size:9pt; margin-top:6px;">※対象従業員数は労働保険年度更新、算定基礎届の対象人数に基づき、毎年８月１日から７月３１日まで適用となります。</p>',
@@ -1206,7 +1217,7 @@ function getContract5(r, toW) {
     '<table><tr><td>処遇改善加算サポート基本料(2-(1)の業務)</td><td class="right">月額 5,000円</td></tr><tr><td>計画書、報告書作成に要する集計及び根拠資料の作成(2-(2)～(6)の業務)</td><td class="right">月額 10,000円</td></tr><tr><td>処遇改善対象人数（月次サービス一覧C参照）' + empC + '名（給与計算委託あり・50円/名）</td><td class="right">月額 ' + empPriceC.toLocaleString() + '円</td></tr><tr class="total-row"><td class="bold">合計</td><td class="right bold">月額 ' + totalC.toLocaleString() + '円</td></tr></table>',
     '<p style="font-size:9pt; margin-top:6px;">※対象従業員数は実績報告時の集計人数により決定し、毎年８月１日から７月３１日まで適用となります。</p>',
     contractNoteHtml(r),
-    commonLegalClauses(8),
+    commonLegalClauses(9),
     signatureBlock(r.clientName, r.contractStart, toW)
   ].join('');
 }
