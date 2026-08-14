@@ -81,7 +81,7 @@
 
 - 最終更新AI: Claude Code
 - 最終更新日時: 2026-08-14（日本時間）
-- 変更内容: `printFeeTable()`に印刷専用スタイル（`feeTableStyle`）を追加し、月次報酬一覧・手続き料金表の印刷/PDF出力が2ページ以内に収まるよう調整。金額・帳票項目・計算ロジックの変更はなし。コミット後、Firebase Hostingへデプロイ予定。
+- 変更内容: `printFeeTable()`に印刷専用スタイル（`feeTableStyle`）を追加し、月次報酬一覧・手続き料金表の印刷/PDF出力が2ページ以内に収まるよう調整。金額・帳票項目・計算ロジックの変更はなし。コミット`d6bf14a`をpush後、Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ完了（`found 1 files in public`でindex.html以外は含まれないことを確認）。
 
 ### 過去の更新
 
