@@ -7,6 +7,7 @@
 - Google Cloud Console / Firebase Console側のOAuth設定が未実施のため、現時点では公開URLでのGoogleログインは失敗する見込み（NEXT_ACTION参照）。
 - HTML/CSS/JavaScriptのみで動作するアプリ（中身は1ファイルのまま）。Firebase Authentication（Googleアカウント、`ALLOWED_EMAILS`ホワイトリスト方式）でログイン必須化。データ保存は行わない（PDF出力のみ、現状維持）。
 - 既存の料金計算・PDF出力ロジック・帳票内容は変更していない（認証機能の追加のみ）。
+- `printFeeTable()`（月次報酬一覧・手続き料金表の印刷/PDF出力）に印刷専用スタイル（`feeTableStyle`）を追加し、2ページ以内に収まるよう調整（2026-08-14）。金額・帳票項目・計算ロジックの変更はなし。
 - CodexとClaude Codeは対等な開発担当であり、共通Git手順と競合停止ルールを適用する。
 
 ## Git状態
@@ -79,5 +80,9 @@
 ## 最終更新
 
 - 最終更新AI: Claude Code
-- 最終更新日時: 2026-08-06（日本時間）
-- 変更内容: Firebase Hosting + Google認証（ホワイトリスト方式）を追加し、Firebase Hostingサイト`saitoh-sr-estimate-contract`を作成・デプロイ完了。正本を`public/index.html`へ移動。`firebase.json`/`.firebaserc`を新規作成。既存の料金計算・PDF出力ロジックは無変更。OAuth設定・GitHub Pages無効化・実ブラウザでのログイン確認は未実施（NEXT_ACTION参照）。
+- 最終更新日時: 2026-08-14（日本時間）
+- 変更内容: `printFeeTable()`に印刷専用スタイル（`feeTableStyle`）を追加し、月次報酬一覧・手続き料金表の印刷/PDF出力が2ページ以内に収まるよう調整。金額・帳票項目・計算ロジックの変更はなし。コミット後、Firebase Hostingへデプロイ予定。
+
+### 過去の更新
+
+- 2026-08-06（Claude Code）: Firebase Hosting + Google認証（ホワイトリスト方式）を追加し、Firebase Hostingサイト`saitoh-sr-estimate-contract`を作成・デプロイ完了。正本を`public/index.html`へ移動。`firebase.json`/`.firebaserc`を新規作成。既存の料金計算・PDF出力ロジックは無変更。OAuth設定・GitHub Pages無効化・実ブラウザでのログイン確認は未実施（NEXT_ACTION参照）。

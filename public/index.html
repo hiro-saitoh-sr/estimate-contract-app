@@ -1259,6 +1259,17 @@ function monthlyFeeTableHtml() {
     '<div style="margin-top:12px; font-size:9pt; color:#555;">※従業員単価は段階計算です。例：21名の場合、1～20名単価と21名以降の単価を組み合わせて計算します。<br>※表示額は税抜きです。消費税が別途かかります。源泉所得税は報酬額（税抜）を基準に計算します。</div>';
 }
 function printFeeTable() {
+  // 月次報酬一覧・手続き料金表専用：2ページ以内に収めるためのスタイル上書き
+  const feeTableStyle = `
+    <style>
+      body { font-size: 9pt !important; line-height: 1.45 !important; }
+      @page { size: A4; margin: 12mm 12mm !important; }
+      table { margin: 4px 0 8px !important; }
+      th, td { padding: 4px 7px !important; }
+      .title { font-size: 16pt !important; margin: 0 0 10px !important; }
+      h2 { font-size: 11pt !important; margin: 8px 0 4px !important; padding-bottom: 3px; }
+    </style>
+  `;
   const rows = [
     ['社会保険関係','新規適用届（被用者5人未満）','20,000円','35,000円'],
     ['社会保険関係','算定基礎届','13,000円','28,000円'],
@@ -1307,7 +1318,7 @@ function printFeeTable() {
     ['その他','オフィスステーション給与初期設定サポート','400,000円','800,000円'],
   ];
   const body = rows.map(r => '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td><td class="right">' + r[2] + '</td><td class="right">' + r[3] + '</td></tr>').join('');
-  const html = monthlyFeeTableHtml() + '<div class="page-break"></div>' +
+  const html = feeTableStyle + monthlyFeeTableHtml() + '<div class="page-break"></div>' +
     '<div class="title">手 続 き 料 金 表</div>' +
     '<div style="text-align:right; margin-bottom:12px;">社会保険労務士齊藤事務所</div>' +
     '<table><tr style="background:#2E4057;color:white;"><th>関係法令</th><th>手続き名</th><th class="right">継続契約あり</th><th class="right">スポット価格</th></tr>' + body + '</table>' +
