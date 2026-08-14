@@ -83,7 +83,7 @@
 
 - 最終更新AI: Claude Code
 - 最終更新日時: 2026-08-14（日本時間）
-- 変更内容: 業務委託契約書テンプレート（`getContract1`〜`5`）の署名欄・改ページを修正。①甲側の署名欄を「代表者」ラベル＋空白の署名スペースがある元の形式に戻した（前回改訂で削除していたもの。乙側「代表者　齊藤 広幸」は維持）、②`.section`（各条タイトル）に`break-after: avoid`を追加し、タイトルのみ前ページに残らないようにした、③全5パターンの「報酬額」条の直前に`<div class="page-break">`を挿入、④全5パターンの署名欄（`signatureBlock`）の直前に`<div class="page-break">`を挿入。5パターン全てに適用。料金計算・PDF出力ロジックは変更なし。ブラウザでの目視確認後、コミット・push、Firebase Hostingへデプロイ。
+- 変更内容: 業務委託契約書テンプレート（`getContract1`〜`5`）の署名欄・改ページを修正。①甲側の署名欄を「代表者」ラベル＋空白の署名スペースがある元の形式に戻した（前回改訂で削除していたもの。乙側「代表者　齊藤 広幸」は維持）、②`.section`（各条タイトル）に`break-after: avoid`を追加し、タイトルのみ前ページに残らないようにした、③全5パターンの「報酬額」条の直前に`<div class="page-break">`を挿入、④全5パターンの署名欄（`signatureBlock`）の直前に`<div class="page-break">`を挿入。5パターン全てに適用。料金計算・PDF出力ロジックは変更なし。ブラウザでの目視確認後、コミット`f070a2e`をpush、Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ完了（`found 1 files in public`でindex.html以外は含まれないことを確認）。
 
 ### 過去の更新
 
