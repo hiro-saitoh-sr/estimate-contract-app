@@ -701,7 +701,7 @@ function printHTML(html, title = '見積書・契約書') {
     .subtitle { font-size: 11pt; text-align: center; margin-bottom: 18px; color: #52606D; }
     .info-table { border: none; margin-bottom: 18px; }
     .info-table td { border: none; padding: 3px 8px; background: #fff !important; }
-    .section { margin: 18px 0 8px; padding: 6px 8px; font-weight: bold; color: #102A43; background: #EAF2F8; border-left: 5px solid #2E4057; border-bottom: none; page-break-after: avoid; }
+    .section { margin: 18px 0 8px; padding: 6px 8px; font-weight: bold; color: #102A43; background: #EAF2F8; border-left: 5px solid #2E4057; border-bottom: none; page-break-after: avoid; break-after: avoid; }
     .section-note { margin: 18px 0 8px; padding: 4px 2px; font-weight: bold; font-style: italic; color: #52606D; border-top: 1px dashed #9AA5B1; border-bottom: 1px dashed #9AA5B1; page-break-after: avoid; }
     .total-row td { background: #FFF4CC !important; font-weight: bold; font-size: 11.5pt; }
     .discount-row td { background: #FDEBEC !important; color: #9B1C1C; font-weight: bold; }
@@ -978,7 +978,7 @@ function signatureBlock(clientName, startDate, toW) {
     <p>以上、契約成立の証として、本契約書はオフィスステーションサインによる電子署名により締結します。</p>
     <p style="margin-top:16px;">${toW(startDate)}</p>
     <table class="sign-table" style="margin-top:24px;">
-      <tr><td><strong>（甲）</strong><br><br>住所　${postal}<br>　　　${address}<br><br>社名　${name}</td></tr>
+      <tr><td><strong>（甲）</strong><br><br>住所　${postal}<br>　　　${address}<br><br>社名　${name}<br><br>代表者</td></tr>
       <tr><td><strong>（乙）</strong><br><br>住所　〒174-0072<br>　　　東京都板橋区南常盤台1-22-7-402<br><br>社名　社会保険労務士齊藤事務所<br><br>代表者　齊藤 広幸</td></tr>
     </table>
   </div>`;
@@ -1082,11 +1082,13 @@ function getContract1(r, toW) {
     feeRevisionHtml(3),
     contractPeriodHtml(4, r, toW),
     cancellationHtml(5),
+    '<div class="page-break"></div>',
     '<div class="section">6．報酬額 ※表示額は税抜きです。</div>',
     '<table><tr><td>労務サポート契約基本料</td><td class="right">月額 15,000円</td></tr><tr><td>従業員数（月次サービス一覧A参照）' + emp + '名</td><td class="right">月額 ' + empPrice.toLocaleString() + '円</td></tr><tr class="total-row"><td class="bold">合計</td><td class="right bold">月額 ' + totalA.toLocaleString() + '円</td></tr></table>',
     '<p style="font-size:9pt; margin-top:6px;">※対象従業員数は労働保険年度更新、算定基礎届の対象人数に基づき、毎年８月１日から７月３１日まで適用となります。</p>',
     contractNoteHtml(r),
     commonLegalClauses(7),
+    '<div class="page-break"></div>',
     signatureBlock(r.clientName, r.contractStart, toW)
   ].join('');
 }
@@ -1106,6 +1108,7 @@ function getContract2(r, toW) {
     feeRevisionHtml(4),
     contractPeriodHtml(5, r, toW),
     cancellationHtml(6),
+    '<div class="page-break"></div>',
     '<div class="section">7．報酬額 ※表示額は税抜きです。</div>',
     '<p><strong>【労務サポート契約の報酬額】</strong></p>',
     '<table><tr><td>労務サポート契約基本料</td><td class="right">月額 15,000円</td></tr><tr><td>従業員数（月次サービス一覧A参照）' + emp + '名</td><td class="right">月額 ' + empPriceA.toLocaleString() + '円</td></tr><tr class="total-row"><td class="bold">合計</td><td class="right bold">月額 ' + totalA.toLocaleString() + '円</td></tr></table>',
@@ -1115,6 +1118,7 @@ function getContract2(r, toW) {
     '<p style="font-size:9pt; margin-top:6px;">※給与計算を行った人数により報酬額を決定いたしますので、従業員の入退職により変動します。</p>',
     contractNoteHtml(r),
     commonLegalClauses(8),
+    '<div class="page-break"></div>',
     signatureBlock(r.clientName, r.contractStart, toW)
   ].join('');
 }
@@ -1133,11 +1137,13 @@ function getContract3(r, toW) {
     feeRevisionHtml(3),
     contractPeriodHtml(4, r, toW),
     cancellationHtml(5),
+    '<div class="page-break"></div>',
     '<div class="section">6．報酬額 ※表示額は税抜きです。</div>',
     '<table><tr><td>処遇改善加算サポート基本料（Aの契約なし）</td><td class="right">月額 15,000円</td></tr><tr><td>計画書、報告書作成に要する集計及び根拠資料の作成</td><td class="right">月額 10,000円</td></tr><tr><td>処遇改善対象人数（月次サービス一覧C参照）' + emp + '名（' + rateLabel + '）</td><td class="right">月額 ' + empPrice.toLocaleString() + '円</td></tr><tr class="total-row"><td class="bold">合計</td><td class="right bold">月額 ' + (cBase1 + cBase2 + empPrice).toLocaleString() + '円</td></tr></table>',
     '<p style="font-size:9pt; margin-top:6px;">※対象従業員数は実績報告時の集計人数により決定し、毎年８月１日から７月３１日まで適用となります。</p>',
     contractNoteHtml(r),
     commonLegalClauses(7),
+    '<div class="page-break"></div>',
     signatureBlock(r.clientName, r.contractStart, toW)
   ].join('');
 }
@@ -1159,6 +1165,7 @@ function getContract4(r, toW) {
     feeRevisionHtml(4),
     contractPeriodHtml(5, r, toW),
     cancellationHtml(6),
+    '<div class="page-break"></div>',
     '<div class="section">7．報酬額 ※表示額は税抜きです。</div>',
     '<p><strong>【労務サポート契約の報酬額】</strong></p>',
     '<table><tr><td>労務サポート契約基本料</td><td class="right">月額 15,000円</td></tr><tr><td>従業員数（月次サービス一覧A参照）' + emp + '名</td><td class="right">月額 ' + empPriceA.toLocaleString() + '円</td></tr><tr class="total-row"><td class="bold">合計</td><td class="right bold">月額 ' + totalA.toLocaleString() + '円</td></tr></table>',
@@ -1168,6 +1175,7 @@ function getContract4(r, toW) {
     '<p style="font-size:9pt; margin-top:6px;">※対象従業員数は実績報告時の集計人数により決定し、毎年８月１日から７月３１日まで適用となります。</p>',
     contractNoteHtml(r),
     commonLegalClauses(8),
+    '<div class="page-break"></div>',
     signatureBlock(r.clientName, r.contractStart, toW)
   ].join('');
 }
@@ -1206,6 +1214,7 @@ function getContract5(r, toW) {
     '<p>※期間終了日の２ヶ月前までに解約の意思表示がない場合は自動更新といたします。</p>',
     '<div class="section">7．中途解約</div>',
     '<p>本契約の当事者は、本契約の有効期間であっても、解約日の２か月前までに相手方に対する書面又は電磁的方法による通知により、本契約の全部又は一部を解約することができます。</p>',
+    '<div class="page-break"></div>',
     '<div class="section">8．報酬額 ※表示額は税抜きです。</div>',
     '<p><strong>【労務サポート契約の報酬額】</strong></p>',
     '<table><tr><td>労務サポート契約基本料</td><td class="right">月額 15,000円</td></tr><tr><td>従業員数（月次サービス一覧A参照）' + emp + '名</td><td class="right">月額 ' + empPriceA.toLocaleString() + '円</td></tr><tr class="total-row"><td class="bold">合計</td><td class="right bold">月額 ' + totalA.toLocaleString() + '円</td></tr></table>',
@@ -1218,6 +1227,7 @@ function getContract5(r, toW) {
     '<p style="font-size:9pt; margin-top:6px;">※対象従業員数は実績報告時の集計人数により決定し、毎年８月１日から７月３１日まで適用となります。</p>',
     contractNoteHtml(r),
     commonLegalClauses(9),
+    '<div class="page-break"></div>',
     signatureBlock(r.clientName, r.contractStart, toW)
   ].join('');
 }
