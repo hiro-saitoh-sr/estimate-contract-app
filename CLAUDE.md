@@ -68,3 +68,15 @@
 - ログイン許可アカウント: `public/index.html` 内 `ALLOWED_EMAILS`
 - OAuthクライアントID・Firebase設定値（apiKey等）はtask-app / labor-notice-app / portalと共用（値は公開情報のクライアント側キー）
 - Firestore・Realtime Databaseは使用しない（認証のみ、データ保存なし）
+
+## ホスティング
+
+- 本番URL: https://saitoh-sr-estimate-contract.web.app
+- ホスティング: Firebase Hosting（GitHub Pagesは旧環境）
+- デプロイコマンド: firebase deploy
+- git pushだけでは本番に反映されない。必ずfirebase deployまで実行すること
+
+## ローカル作業場所
+
+- 正本: C:\Users\hiro1\Documents\Codex\2026-06-28\excel-python-streamlit-pc-mvp
+- 新規クローンは作成しない。必ず正本で作業すること
