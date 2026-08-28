@@ -811,7 +811,8 @@ function detailBreakdownHtml(r) {
   });
   if (optionItems.length > 0) {
     const optionRows = optionItems.map(item => '<tr><td>' + item.label + '</td><td class="right">' + item.amount.toLocaleString() + '円</td></tr>').join('');
-    html += '<table><tr style="background:#566573;color:white;"><th colspan="2">月次オプション</th></tr>' +
+    html += '<div class="page-break"></div>' +
+      '<table><tr style="background:#566573;color:white;"><th colspan="2">月次オプション</th></tr>' +
       '<tr style="background:#EEF2F7;"><th>項目</th><th class="right">金額</th></tr>' +
       optionRows +
       '<tr><td class="right bold">月次オプション 小計</td><td class="right bold">' + optionItems.reduce((sum, item) => sum + item.amount, 0).toLocaleString() + '円</td></tr></table>';
