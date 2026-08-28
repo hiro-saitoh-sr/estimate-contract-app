@@ -12,12 +12,13 @@
 - 業務委託契約書テンプレート（`getContract1`〜`5`）の署名欄・改ページを修正（2026-08-14）。甲側の署名欄は「代表者」ラベル＋空白の署名スペースがある元の形式に戻し（乙側「代表者　齊藤 広幸」は維持）、各条タイトルが前ページに取り残されないよう`.section`に`break-after: avoid`を追加、「報酬額」条の直前・署名欄の直前に必ず改ページを挿入。料金計算ロジックは変更なし。
 - 料金計算明細（`printDetail()`）の顧問先名表示を「顧問先名：株式会社〇〇」から「株式会社〇〇 御中」に変更（2026-08-21）。ラベルを削除し社名の後に「 御中」を付与。金額・計算ロジックの変更はなし。
 - 月次報酬一覧（`monthlyFeeTableHtml()`）の「月次オプション」h2直前に`<div class="page-break"></div>`を追加（2026-08-28）。改ページ位置の修正のみで、金額・項目・計算ロジックの変更はなし。Firebase Hostingへデプロイ済み（2026-08-28）。
+- 料金計算明細（`detailBreakdownHtml()`）の「月次オプション」テーブル直前にも`<div class="page-break"></div>`を追加（2026-08-28）。既存の`.page-break`クラスを利用。改ページ位置の修正のみで、金額・項目・計算ロジックの変更はなし。Firebase Hostingへデプロイ済み（2026-08-28）。
 - CodexとClaude Codeは対等な開発担当であり、共通Git手順と競合停止ルールを適用する。
 
 ## Git状態
 
 - 対象ブランチ: `main`
-- 直近コミット: `d805188`（月次報酬一覧の月次オプション前に改ページを追加）
+- 直近コミット: `7b10782`（料金計算明細の月次オプション前に改ページを追加）
 - 2026-08-28確認時点で `origin/main` と同期済み（ahead 0 / behind 0）、Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ完了
 
 ## Git管理方針
@@ -84,10 +85,14 @@
 ## 最終更新
 
 - 最終更新AI: Claude Code
-- 最終更新日時: 2026-08-21（日本時間）
-- 変更内容: 料金計算明細（`printDetail()`）の顧問先名表示を「顧問先名：株式会社〇〇」から「株式会社〇〇 御中」に変更。ラベル「顧問先名：」を削除し、社名の後に「 御中」を付与。金額・計算ロジック・他の帳票は変更なし。コミット`7cd9aaa`をpush、Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ完了。
+- 最終更新日時: 2026-08-28（日本時間）
+- 変更内容: 料金計算明細（`detailBreakdownHtml()`）の「月次オプション」テーブル直前に`<div class="page-break"></div>`を追加。既存の`.page-break`クラス（`break-before: page`）を利用した改ページ位置の修正のみで、金額・項目・計算ロジックの変更はなし。コミット`7b10782`をpush、Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ完了。
 
 ### 過去の更新
+
+- 2026-08-28（Claude Code）: 月次報酬一覧（`monthlyFeeTableHtml()`）の「月次オプション」h2直前に`<div class="page-break"></div>`を追加。改ページ位置の修正のみで、金額・項目・計算ロジックの変更はなし。コミット`d805188`をpush、Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ完了。
+
+- 2026-08-21（Claude Code）: 料金計算明細（`printDetail()`）の顧問先名表示を「顧問先名：株式会社〇〇」から「株式会社〇〇 御中」に変更。ラベル「顧問先名：」を削除し、社名の後に「 御中」を付与。金額・計算ロジック・他の帳票は変更なし。コミット`7cd9aaa`をpush、Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ完了。
 
 - 2026-08-14（Claude Code）: 業務委託契約書テンプレート（`getContract1`〜`5`）の署名欄・改ページを修正。①甲側の署名欄を「代表者」ラベル＋空白の署名スペースがある元の形式に戻した（前回改訂で削除していたもの。乙側「代表者　齊藤 広幸」は維持）、②`.section`（各条タイトル）に`break-after: avoid`を追加し、タイトルのみ前ページに残らないようにした、③全5パターンの「報酬額」条の直前に`<div class="page-break">`を挿入、④全5パターンの署名欄（`signatureBlock`）の直前に`<div class="page-break">`を挿入。5パターン全てに適用。料金計算・PDF出力ロジックは変更なし。ブラウザでの目視確認後、コミット`f070a2e`をpush、Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ完了（`found 1 files in public`でindex.html以外は含まれないことを確認）。
 
