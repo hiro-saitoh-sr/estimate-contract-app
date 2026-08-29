@@ -134,7 +134,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: #2E4057
   <div class="form-row">
     <div>
       <label>契約開始日</label>
-      <input type="text" id="contractStart" placeholder="例：2026/7/1" onchange="calc()">
+      <input type="date" id="contractStart" onchange="onContractStartChange()">
     </div>
     <div>
       <label>契約終了日</label>
@@ -234,14 +234,15 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: #2E4057
 <div class="card">
   <h2>PDF出力</h2>
   <div class="btn-group">
-    <button class="btn btn-primary" onclick="printEstimate()">📄 見積書を印刷/PDF保存</button>
-    <button class="btn btn-green" onclick="printContract()">📝 契約書を印刷/PDF保存</button>
-    <button class="btn btn-blue" onclick="printDetail()">📊 料金計算明細を印刷/PDF保存</button>
-    <button class="btn btn-orange" onclick="printFeeTable()">💰 手続き料金表を印刷/PDF保存</button>
+    <button class="btn btn-primary" onclick="printConfirmationSet()">📋 確認用セット出力</button>
+    <button class="btn btn-green" onclick="printSigningSet()">✍️ 締結用セット出力</button>
+    <button class="btn btn-orange" onclick="printFeeTable()">💰 料金表を出力</button>
   </div>
   <div class="notice" style="margin-top:12px;">
     ※印刷ダイアログで「PDFに保存」を選択してください<br>
-    ※契約書は契約内容に応じて自動的に選択されます
+    ※契約書は契約内容に応じて自動的に選択されます<br>
+    ※確認用セット出力：見積書 → 料金明細 → 契約書 → 料金表の順にまとめて出力します<br>
+    ※締結用セット出力：契約書 → 料金明細 → 料金表の順にまとめて出力します
   </div>
 </div>
 
@@ -500,6 +501,17 @@ function escapeHtml(s) {
 function getInputValue(id) {
   const el = document.getElementById(id);
   return el ? String(el.value || '').trim() : '';
+}
+function onContractStartChange() {
+  const startVal = getInputValue('contractStart');
+  if (startVal) {
+    const parts = startVal.split('-');
+    const startYear = parts.length === 3 ? parseInt(parts[0], 10) : NaN;
+    if (!Number.isNaN(startYear)) {
+      document.getElementById('contractEnd').value = (startYear + 1) + '/7/31';
+    }
+  }
+  calc();
 }
 function alertMissing(items) {
   alert('出力前に確認してください。\n\n' + items.map(item => '・' + item).join('\n'));
@@ -830,24 +842,16 @@ function detailTotalHtml(r) {
     '</table>';
 }
 // ========== 見積書 ==========
-function printEstimate() {
-  if (!validateMonthlyOutput('estimate')) return;
-  if (!calcResult.items) { alert('サービスを選択してください'); return; }
-  const r = calcResult;
+function estimateContentHtml(r) {
   const today = new Date();
   const expiry = new Date(today); expiry.setDate(expiry.getDate() + 10);
   const fmt = d => `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
-  const toW = dateStr => {
-    if (!dateStr) return '　　　年　　月　　日';
-    const d = new Date(dateStr);
-    return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
-  };
 
   let rows = r.items.map(i =>
     `<tr><td>${i.label}</td><td class="right">${i.amount.toLocaleString()}円</td></tr>`
   ).join('');
 
-  const html = `
+  return `
   <div class="title">お 見 積 書</div>
   <table class="info-table" style="margin-bottom:16px;">
     <tr><td style="font-size:13pt; font-weight:bold; width:60%;">${r.clientName || '　　　　　　　　　　　　'} 御中</td>
@@ -876,18 +880,19 @@ function printEstimate() {
     ※表示額は月額です。口座振替はサービス提供翌月22日（休日の場合は後日）<br>
     ※手続き費用は別途手続き料金表に基づきご請求いたします
   </div>`;
-
-  printHTML(html, buildPrintTitle('お見積書(月次報酬)', r.clientName));
+}
+function printEstimate() {
+  if (!validateMonthlyOutput('estimate')) return;
+  if (!calcResult.items) { alert('サービスを選択してください'); return; }
+  const r = calcResult;
+  printHTML(estimateContentHtml(r), buildPrintTitle('お見積書(月次報酬)', r.clientName));
 }
 
 // ========== 料金計算明細 ==========
-function printDetail() {
-  if (!validateMonthlyOutput('detail')) return;
-  if (!calcResult.items) { alert('サービスを選択してください'); return; }
-  const r = calcResult;
+function detailContentHtml(r) {
   const fmt = d => `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
 
-  const html = `
+  return `
   <div class="title">料 金 計 算 明 細</div>
   <table class="info-table" style="margin-bottom:16px;">
     <tr>
@@ -900,8 +905,12 @@ function printDetail() {
   </table>
   ${detailBreakdownHtml(r)}
   ${detailTotalHtml(r)}`;
-
-  printHTML(html, buildPrintTitle('料金計算明細', r.clientName));
+}
+function printDetail() {
+  if (!validateMonthlyOutput('detail')) return;
+  if (!calcResult.items) { alert('サービスを選択してください'); return; }
+  const r = calcResult;
+  printHTML(detailContentHtml(r), buildPrintTitle('料金計算明細', r.clientName));
 }
 
 // ========== 契約書 ==========
@@ -920,14 +929,8 @@ function getContractTypeName(t) {
   return names[t] || '未選択';
 }
 
-function printContract() {
-  if (!validateMonthlyOutput('contract')) return;
-  if (!calcResult.items) { alert('サービスを選択してください'); return; }
-  const r = calcResult;
-  const t = getContractType();
-  if (t === 0) { alert('契約書を生成できる契約内容を選択してください'); return; }
-
-  const toW = dateStr => {
+function contractDateFormatter() {
+  return dateStr => {
     if (!dateStr) return '　　　　年　　月　　日';
     const s = String(dateStr).trim();
     const m = s.match(/^(\d{4})[\/\-.年](\d{1,2})(?:[\/\-.月](\d{1,2}))?/);
@@ -939,7 +942,11 @@ function printContract() {
     if (Number.isNaN(d.getTime())) return s;
     return d.getFullYear() + '年' + (d.getMonth()+1) + '月' + d.getDate() + '日';
   };
-
+}
+function contractContentHtml(r) {
+  const t = getContractType();
+  if (t === 0) return null;
+  const toW = contractDateFormatter();
   // 契約種別に応じた契約内容
   const contractContents = {
     1: getContract1(r, toW),
@@ -948,8 +955,15 @@ function printContract() {
     4: getContract4(r, toW),
     5: getContract5(r, toW),
   };
-
-  printHTML(contractContents[t], buildPrintTitle('業務委託契約書', r.clientName));
+  return contractContents[t];
+}
+function printContract() {
+  if (!validateMonthlyOutput('contract')) return;
+  if (!calcResult.items) { alert('サービスを選択してください'); return; }
+  const r = calcResult;
+  const html = contractContentHtml(r);
+  if (!html) { alert('契約書を生成できる契約内容を選択してください'); return; }
+  printHTML(html, buildPrintTitle('業務委託契約書', r.clientName));
 }
 
 function commonClauses(includeA, includeB, includeC) {
@@ -1281,18 +1295,7 @@ function monthlyFeeTableHtml() {
     '<table><tr style="background:#2E4057;color:white;"><th>項目</th><th class="right">月額・年額報酬（税抜）</th></tr>' + officeRows + '</table>' +
     '<div style="margin-top:12px; font-size:9pt; color:#555;">※従業員単価は段階計算です。例：21名の場合、1～20名単価と21名以降の単価を組み合わせて計算します。<br>※表示額は税抜きです。消費税が別途かかります。源泉所得税は報酬額（税抜）を基準に計算します。</div>';
 }
-function printFeeTable() {
-  // 月次報酬一覧・手続き料金表専用：2ページ以内に収めるためのスタイル上書き
-  const feeTableStyle = `
-    <style>
-      body { font-size: 9pt !important; line-height: 1.45 !important; }
-      @page { size: A4; margin: 12mm 12mm !important; }
-      table { margin: 4px 0 8px !important; }
-      th, td { padding: 4px 7px !important; }
-      .title { font-size: 16pt !important; margin: 0 0 10px !important; }
-      h2 { font-size: 11pt !important; margin: 8px 0 4px !important; padding-bottom: 3px; }
-    </style>
-  `;
+function feeTableBodyHtml() {
   const rows = [
     ['社会保険関係','新規適用届（被用者5人未満）','20,000円','35,000円'],
     ['社会保険関係','算定基礎届','13,000円','28,000円'],
@@ -1341,12 +1344,52 @@ function printFeeTable() {
     ['その他','オフィスステーション給与初期設定サポート','400,000円','800,000円'],
   ];
   const body = rows.map(r => '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td><td class="right">' + r[2] + '</td><td class="right">' + r[3] + '</td></tr>').join('');
-  const html = feeTableStyle + monthlyFeeTableHtml() + '<div class="page-break"></div>' +
+  return monthlyFeeTableHtml() + '<div class="page-break"></div>' +
     '<div class="title">手 続 き 料 金 表</div>' +
     '<div style="text-align:right; margin-bottom:12px;">社会保険労務士齊藤事務所</div>' +
     '<table><tr style="background:#2E4057;color:white;"><th>関係法令</th><th>手続き名</th><th class="right">継続契約あり</th><th class="right">スポット価格</th></tr>' + body + '</table>' +
     '<div style="margin-top:12px; font-size:9pt; color:#555;">※表示額は税抜きです。消費税が別途かかります。<br>※継続契約ありは月次顧問契約（労務サポート契約）をご締結のお客様への価格です。<br>※人数が多い場合は1名あたりの加算料金が適用される場合があります。詳しくはお問い合わせください。<br>社会保険労務士齊藤事務所　TEL：03-6325-1208</div>';
-  printHTML(html, buildPrintTitle('手続き料金表', '', false));
+}
+function printFeeTable() {
+  // 月次報酬一覧・手続き料金表専用：2ページ以内に収めるためのスタイル上書き
+  const feeTableStyle = `
+    <style>
+      body { font-size: 9pt !important; line-height: 1.45 !important; }
+      @page { size: A4; margin: 12mm 12mm !important; }
+      table { margin: 4px 0 8px !important; }
+      th, td { padding: 4px 7px !important; }
+      .title { font-size: 16pt !important; margin: 0 0 10px !important; }
+      h2 { font-size: 11pt !important; margin: 8px 0 4px !important; padding-bottom: 3px; }
+    </style>
+  `;
+  printHTML(feeTableStyle + feeTableBodyHtml(), buildPrintTitle('手続き料金表', '', false));
+}
+
+// ========== セット出力 ==========
+function printConfirmationSet() {
+  if (!validateMonthlyOutput('contract')) return;
+  if (!calcResult.items) { alert('サービスを選択してください'); return; }
+  const r = calcResult;
+  const contractHtml = contractContentHtml(r);
+  if (!contractHtml) { alert('契約書を生成できる契約内容を選択してください'); return; }
+  const pageBreak = '<div class="page-break"></div>';
+  const html = estimateContentHtml(r) + pageBreak +
+    detailContentHtml(r) + pageBreak +
+    contractHtml + pageBreak +
+    feeTableBodyHtml();
+  printHTML(html, buildPrintTitle('確認用セット', r.clientName));
+}
+function printSigningSet() {
+  if (!validateMonthlyOutput('contract')) return;
+  if (!calcResult.items) { alert('サービスを選択してください'); return; }
+  const r = calcResult;
+  const contractHtml = contractContentHtml(r);
+  if (!contractHtml) { alert('契約書を生成できる契約内容を選択してください'); return; }
+  const pageBreak = '<div class="page-break"></div>';
+  const html = contractHtml + pageBreak +
+    detailContentHtml(r) + pageBreak +
+    feeTableBodyHtml();
+  printHTML(html, buildPrintTitle('締結用セット', r.clientName));
 }
 
 

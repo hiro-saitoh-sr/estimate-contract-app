@@ -13,13 +13,15 @@
 - 料金計算明細（`printDetail()`）の顧問先名表示を「顧問先名：株式会社〇〇」から「株式会社〇〇 御中」に変更（2026-08-21）。ラベルを削除し社名の後に「 御中」を付与。金額・計算ロジックの変更はなし。
 - 月次報酬一覧（`monthlyFeeTableHtml()`）の「月次オプション」h2直前に`<div class="page-break"></div>`を追加（2026-08-28）。改ページ位置の修正のみで、金額・項目・計算ロジックの変更はなし。Firebase Hostingへデプロイ済み（2026-08-28）。
 - 料金計算明細（`detailBreakdownHtml()`）の「月次オプション」テーブル直前にも`<div class="page-break"></div>`を追加（2026-08-28）。既存の`.page-break`クラスを利用。改ページ位置の修正のみで、金額・項目・計算ロジックの変更はなし。Firebase Hostingへデプロイ済み（2026-08-28）。
+- PDF出力ボタンを個別出力（見積書・契約書・料金計算明細・手続き料金表）から3ボタンに再編（2026-08-29）。①「📋 確認用セット出力」＝見積書→料金明細→契約書→料金表の順に1ウィンドウへ連結して出力、②「✍️ 締結用セット出力」＝契約書→料金明細→料金表の順に連結して出力、③「💰 料金表を出力」＝手続き料金表単独出力（`printFeeTable()`、内容・スタイルとも現状維持）。各帳票のHTML生成部を`estimateContentHtml()`／`detailContentHtml()`／`contractContentHtml()`／`feeTableBodyHtml()`として関数分離し、セット出力側で`<div class="page-break">`を挟んで連結する実装。スポット手続き（見積書・請求書・領収書）のボタン・ロジックは変更なし。料金計算ロジックは変更なし。
+- 契約開始日の入力を`input type="text"`から`input type="date"`（カレンダー選択）に変更（2026-08-29）。契約開始日を選択すると`onContractStartChange()`が契約終了日に「翌年7月31日」（開始日の年+1年の7/31）を自動入力する。契約終了日は引き続き`type="text"`のまま手動編集可能（自動入力後に上書き可）。既存の日付表示ロジック（`contractDateFormatter()`、旧`toW`）はスラッシュ・ハイフン両区切りに対応済みのため変更なし。
 - CodexとClaude Codeは対等な開発担当であり、共通Git手順と競合停止ルールを適用する。
 
 ## Git状態
 
 - 対象ブランチ: `main`
-- 直近コミット: `7b10782`（料金計算明細の月次オプション前に改ページを追加）
-- 2026-08-28確認時点で `origin/main` と同期済み（ahead 0 / behind 0）、Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ完了
+- 直近コミット: `__COMMIT_HASH__`（出力ボタンをセット出力に整理・契約日入力をカレンダー選択に変更）
+- 2026-08-29確認時点で `origin/main` と同期済み（ahead 0 / behind 0）、Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ完了
 
 ## Git管理方針
 
@@ -85,10 +87,12 @@
 ## 最終更新
 
 - 最終更新AI: Claude Code
-- 最終更新日時: 2026-08-28（日本時間）
-- 変更内容: 料金計算明細（`detailBreakdownHtml()`）の「月次オプション」テーブル直前に`<div class="page-break"></div>`を追加。既存の`.page-break`クラス（`break-before: page`）を利用した改ページ位置の修正のみで、金額・項目・計算ロジックの変更はなし。コミット`7b10782`をpush、Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ完了。
+- 最終更新日時: 2026-08-29（日本時間）
+- 変更内容: PDF出力ボタンを「①📋確認用セット出力（見積書→料金明細→契約書→料金表）」「②✍️締結用セット出力（契約書→料金明細→料金表）」「③💰料金表を出力（現状維持）」の3ボタンに再編。契約開始日を`type="date"`に変更し、選択時に契約終了日へ翌年7月31日を自動入力（手動修正は可能）。既存の料金計算ロジック・帳票内容・スポット手続き出力は変更なし。jsdomによるヘッドレステスト（契約書5パターン全て、確認用/締結用セットの出力順序、料金表単独出力、入力不足時のバリデーション、契約終了日の自動入力・手動上書き）で動作確認済み（実ブラウザでのGoogleログイン経由の目視確認は未実施）。コミット`__COMMIT_HASH__`をpush、Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ完了。
 
 ### 過去の更新
+
+- 2026-08-28（Claude Code）: 料金計算明細（`detailBreakdownHtml()`）の「月次オプション」テーブル直前に`<div class="page-break"></div>`を追加。既存の`.page-break`クラス（`break-before: page`）を利用した改ページ位置の修正のみで、金額・項目・計算ロジックの変更はなし。コミット`7b10782`をpush、Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ完了。
 
 - 2026-08-28（Claude Code）: 月次報酬一覧（`monthlyFeeTableHtml()`）の「月次オプション」h2直前に`<div class="page-break"></div>`を追加。改ページ位置の修正のみで、金額・項目・計算ロジックの変更はなし。コミット`d805188`をpush、Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ完了。
 
