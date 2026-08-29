@@ -1217,6 +1217,7 @@ function getContract5(r, toW) {
     '<p>（１）月次給与の支給額、控除額の計算<br>（２）給与明細書、支給控除一覧表の作成<br>（３）賞与の支給額、控除額の計算（別途費用を頂戴いたします）</p>',
     '<p><strong>【給与計算サポート契約の確認事項】</strong></p>',
     '<p>・支給控除一覧表、振込額一覧表のPDFデータをご納品いたします<br>・原則としてweb給与明細をご使用いただきます(１名あたり55円(税込み))<br>・紙の給与明細書をご希望の場合は別途費用を頂戴いたします(１名あたり330円(税込み))<br>・勤怠システムを使用されない場合は乙の指定するExcelに甲にてご入力いただきます<br>・勤怠システムのご案内ができますのでご相談ください<br>・甲は給与計算に必要な情報を給与支給日の12日前までに乙へ提供します<br>・年末調整に関する業務、退職者の源泉徴収票の発行はサポート対象外となります<br>・住民税の特別徴収、普通徴収切替の届出はサポート対象外となります</p>',
+    '<div class="page-break"></div>',
     '<div class="section">3．処遇改善加算サポート契約</div>',
     '<p><strong>【処遇改善加算サポート契約の業務範囲】</strong></p>',
     '<p>（１）処遇改善加算に関する相談、助言、質疑応答<br>（２）処遇改善計画書及び実績報告書の作成サポート（別途課金があります）<br>（３）上記（２）に関する行政機関からの問い合わせ対応<br>（４）上記（２）の作成に必要な情報の集計作業及び根拠資料の作成<br>（５）年度途中に新規事業所を追加で申請する場合の計画書の作成サポート<br>（６）年度途中で区分変更を行う場合の計画書の作成サポート</p>',
@@ -1348,21 +1349,27 @@ function feeTableBodyHtml() {
     '<div class="title">手 続 き 料 金 表</div>' +
     '<div style="text-align:right; margin-bottom:12px;">社会保険労務士齊藤事務所</div>' +
     '<table><tr style="background:#2E4057;color:white;"><th>関係法令</th><th>手続き名</th><th class="right">継続契約あり</th><th class="right">スポット価格</th></tr>' + body + '</table>' +
-    '<div style="margin-top:12px; font-size:9pt; color:#555;">※表示額は税抜きです。消費税が別途かかります。<br>※継続契約ありは月次顧問契約（労務サポート契約）をご締結のお客様への価格です。<br>※人数が多い場合は1名あたりの加算料金が適用される場合があります。詳しくはお問い合わせください。<br>社会保険労務士齊藤事務所　TEL：03-6325-1208</div>';
+    '<div style="margin-top:12px; font-size:9pt; color:#555;">※表示額は税抜きです。消費税が別途かかります。<br>※継続契約ありは月次顧問契約（労務サポート契約）をご締結のお客様への価格です。<br>※人数が多い場合は1名あたりの加算料金が適用される場合があります。詳しくはお問い合わせください。<br>※一覧にない手続きについても対応できる場合がございます。お気軽にご相談ください。<br>※料金は案件の難易度・複雑さにより別途お見積りとなる場合があります。<br>社会保険労務士齊藤事務所　TEL：03-6325-1208</div>';
 }
-function printFeeTable() {
-  // 月次報酬一覧・手続き料金表専用：2ページ以内に収めるためのスタイル上書き
-  const feeTableStyle = `
+// 月次報酬一覧・手続き料金表専用：単体出力・セット出力の両方で共通のスタイルを適用する
+function feeTableSectionStyle() {
+  return `
     <style>
-      body { font-size: 9pt !important; line-height: 1.45 !important; }
-      @page { size: A4; margin: 12mm 12mm !important; }
-      table { margin: 4px 0 8px !important; }
-      th, td { padding: 4px 7px !important; }
-      .title { font-size: 16pt !important; margin: 0 0 10px !important; }
-      h2 { font-size: 11pt !important; margin: 8px 0 4px !important; padding-bottom: 3px; }
+      .fee-table-section { font-size: 9pt !important; line-height: 1.45 !important; }
+      .fee-table-section table { margin: 4px 0 8px !important; }
+      .fee-table-section th, .fee-table-section td { padding: 4px 7px !important; }
+      .fee-table-section .title { font-size: 16pt !important; margin: 0 0 10px !important; }
+      .fee-table-section h2 { font-size: 11pt !important; margin: 8px 0 4px !important; padding-bottom: 3px; }
     </style>
   `;
-  printHTML(feeTableStyle + feeTableBodyHtml(), buildPrintTitle('手続き料金表', '', false));
+}
+function feeTableSectionHtml() {
+  return '<div class="fee-table-section">' + feeTableBodyHtml() + '</div>';
+}
+function printFeeTable() {
+  // 単体出力は1ページの余白も専用（2ページ以内に収めるため）
+  const feeTablePageStyle = `<style>@page { size: A4; margin: 12mm 12mm !important; }</style>`;
+  printHTML(feeTablePageStyle + feeTableSectionStyle() + feeTableSectionHtml(), buildPrintTitle('手続き料金表', '', false));
 }
 
 // ========== セット出力 ==========
@@ -1372,12 +1379,17 @@ function printConfirmationSet() {
   const r = calcResult;
   const contractHtml = contractContentHtml(r);
   if (!contractHtml) { alert('契約書を生成できる契約内容を選択してください'); return; }
+  // 確認用セットのみ、契約書タイトルに（案）を付ける
+  const draftContractHtml = contractHtml.replace(
+    '<div class="title">業 務 委 託 契 約 書</div>',
+    '<div class="title">業 務 委 託 契 約 書（案）</div>'
+  );
   const pageBreak = '<div class="page-break"></div>';
   const html = estimateContentHtml(r) + pageBreak +
     detailContentHtml(r) + pageBreak +
-    contractHtml + pageBreak +
-    feeTableBodyHtml();
-  printHTML(html, buildPrintTitle('確認用セット', r.clientName));
+    draftContractHtml + pageBreak +
+    feeTableSectionStyle() + feeTableSectionHtml();
+  printHTML(html, buildPrintTitle('お見積書一式', r.clientName));
 }
 function printSigningSet() {
   if (!validateMonthlyOutput('contract')) return;
@@ -1388,8 +1400,8 @@ function printSigningSet() {
   const pageBreak = '<div class="page-break"></div>';
   const html = contractHtml + pageBreak +
     detailContentHtml(r) + pageBreak +
-    feeTableBodyHtml();
-  printHTML(html, buildPrintTitle('締結用セット', r.clientName));
+    feeTableSectionStyle() + feeTableSectionHtml();
+  printHTML(html, buildPrintTitle('業務委託契約書', r.clientName));
 }
 
 
