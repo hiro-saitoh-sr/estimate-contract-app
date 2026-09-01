@@ -23,11 +23,12 @@
 - 業務委託契約書テンプレート（`getContract1`〜`5`）の【給与計算サポート契約の確認事項】を修正（2026-08-30）。「勤怠システムを使用されない場合は乙の指定するExcelに甲にてご入力いただきます」「甲は給与計算に必要な情報を給与支給日の12日前までに乙へ提供します」の2行を削除し、「勤怠の集計はお客様にて行っていただきます。給与計算に必要な勤怠情報・賃金変動データ等は、乙の指定するExcelにご入力のうえ、支給日の12日前までにご提供ください。」の1行に統合。給与計算サポート契約（B）を含むパターンのみ該当（共通関数`payrollClauseHtml()`＝`getContract2`、`getContract5`内の同文言）。B契約を含まない`getContract1`・`3`・`4`にはこの文言自体が存在しないため変更なし。他の条項・料金計算ロジックは変更なし。
 - CodexとClaude Codeは対等な開発担当であり、共通Git手順と競合停止ルールを適用する。
 - 労務サポート契約（A）の基本料を固定15,000円から可変入力に変更（2026-09-01）。チェックボックスラベルを「労務サポート契約（基本料＋従業員数単価）」に変更し、チェック時のみ表示される「労務サポート基本料（税抜）」入力欄（`serviceABaseAmount`、デフォルト15,000円・`min=0`・`step=1000`）を追加。`calc()`が`getServiceABase()`で入力値を読み取り`calcResult.aBase`に格納、料金計算結果・見積書（`estimateContentHtml()`）・料金計算明細（`detailBreakdownHtml()`）・業務委託契約書5パターン（`getContract1`・`2`・`4`・`5`、Aを含まない`getContract3`は対象外）の基本料表示に反映。月次報酬一覧（`monthlyFeeTableHtml()`）は固定15,000円のまま変更なし。処遇改善加算サポート（C）の基本料（Aあり5,000円／Aなし15,000円）は独立した固定値のため計算ロジック変更なし。デフォルト値15,000円のため既存動作は変わらない。Node（vm）でDOMをスタブした単体テストにより、デフォルト値での既存動作再現・カスタム値の計算反映・C基本料の非干渉を確認済み（ブラウザでのログイン後の実機確認は未実施）。Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ済み（2026-09-01、`firebase deploy --only hosting:estimateContract --project task-app-493716`、「found 1 files in public」でindex.html以外は含まれないことを確認）。
+- 料金表出力の労務サポート基本料表記を用途別に分離（2026-09-01）。`monthlyFeeTableHtml()`・`feeTableBodyHtml()`・`feeTableSectionHtml()`に`aBaseLabel`引数を追加し、呼び出し元で表示文言を指定する方式に変更。単体の「料金表を出力」ボタン（`printFeeTable()`）は固定表記「15,000円〜」を渡すのみで入力値とは連動しない。確認用セット（`printConfirmationSet()`）・締結用セット（`printSigningSet()`）は`(r.hasA ? r.aBase : 15000).toLocaleString() + '円'`で、労務サポート契約（A）にチェックがあれば入力値、チェックがなければデフォルト値「15,000円」を表示する。B（給与計算）・C（処遇改善加算）の料金表部分・既存の料金計算ロジックは変更なし。Node（vm）でDOMをスタブした単体テストにより、単体出力が常に「15,000円〜」・セット出力がA未チェック時「15,000円」／チェック時は入力値（例：22,000円）になること、B・C部分が変化しないことを確認済み（ブラウザでのログイン後の実機確認は未実施）。
 
 ## Git状態
 
 - 対象ブランチ: `main`
-- 直近コミット: `8db44c5`（労務サポート基本料を可変入力に対応）
+- 直近コミット: `c68fca3`（PROJECT_STATUS.mdにFirebase Hostingデプロイ完了を反映）
 - 2026-09-01確認時点で `origin/main` と同期済み（ahead 0 / behind 0）、Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ完了
 
 ## Git管理方針
