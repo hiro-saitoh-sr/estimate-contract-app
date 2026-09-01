@@ -153,12 +153,20 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: #2E4057
 <div class="card">
   <h2>契約サービス選択</h2>
 
-  <div class="section-title">A. 労務サポート契約 <span class="tag tag-a">基本料 15,000円/月</span></div>
+  <div class="section-title">A. 労務サポート契約 <span class="tag tag-a">基本料＋従業員数単価</span></div>
   <div class="checkbox-group">
     <label class="checkbox-item">
       <input type="checkbox" id="serviceA" onchange="calc()">
-      労務サポート契約（基本料15,000円＋従業員数単価）
+      労務サポート契約（基本料＋従業員数単価）
     </label>
+  </div>
+  <div id="serviceABaseOptions" style="display:none; margin-top:8px; margin-left:24px;">
+    <div class="form-row single">
+      <div>
+        <label>労務サポート基本料（税抜）</label>
+        <input type="number" id="serviceABaseAmount" min="0" step="1000" value="15000" onchange="calc()">
+      </div>
+    </div>
   </div>
 
   <div class="section-title">B. 給与計算サポート契約 <span class="tag tag-b">給与計算人数×単価</span></div>
@@ -429,6 +437,7 @@ document.getElementById('signOutBtn').addEventListener('click', () => {
 function getEmpCount() { return parseInt(document.getElementById('empCount').value) || 0; }
 function getPayrollCount() { return parseInt(document.getElementById('payrollCount').value) || 0; }
 function getEmpCountC() { return parseInt(document.getElementById('empCountC').value) || 0; }
+function getServiceABase() { return parseInt(document.getElementById('serviceABaseAmount').value) || 0; }
 
 // 段階的単価計算（労務・給与共通）
 function calcStepPrice(emp, rates) {
@@ -565,6 +574,8 @@ function calc() {
   const hasB = document.getElementById('serviceB').checked;
   const hasC = document.getElementById('serviceC').checked;
 
+  // A オプション表示切替
+  document.getElementById('serviceABaseOptions').style.display = hasA ? 'block' : 'none';
   // C オプション表示切替
   document.getElementById('serviceCOptions').style.display = hasC ? 'block' : 'none';
 
@@ -572,12 +583,12 @@ function calc() {
   let subtotal = 0;
 
   // A 労務サポート
+  const aBase = getServiceABase();
   if (hasA) {
-    const base = 15000;
     const empPrice = calcStepPrice(emp, ROMU_RATES);
-    items.push({label: 'A. 労務サポート基本料', amount: base});
+    items.push({label: 'A. 労務サポート基本料', amount: aBase});
     items.push({label: `　従業員数単価（${emp}名・段階計算）`, amount: empPrice});
-    subtotal += base + empPrice;
+    subtotal += aBase + empPrice;
   }
 
   // B 給与計算
@@ -658,6 +669,7 @@ function calc() {
 
   calcResult = { items, subtotal, tax, gensen, total, emp, payroll,
     hasA, hasB, hasC,
+    aBase,
     empC,
     serviceCType: hasC ? getShoguuRateType(hasB) : '',
     clientName: document.getElementById('clientName').value,
@@ -788,10 +800,10 @@ function detailBreakdownHtml(r) {
   if (r.hasA) {
     const empPrice = calcStepPrice(r.emp, ROMU_RATES);
     html += '<table><tr style="background:#566573;color:white;"><th colspan="4">A. 労務サポート契約</th></tr>' +
-      '<tr><td>基本料</td><td class="right">1社</td><td class="right">15,000円</td><td class="right">15,000円</td></tr>' +
+      '<tr><td>基本料</td><td class="right">1社</td><td class="right">' + r.aBase.toLocaleString() + '円</td><td class="right">' + r.aBase.toLocaleString() + '円</td></tr>' +
       '<tr style="background:#EEF2F7;"><th>従業員数単価</th><th class="right">人数</th><th class="right">単価</th><th class="right">金額</th></tr>' +
       stepBreakdownRowsHtml(r.emp, ROMU_RATES) +
-      '<tr><td colspan="3" class="right bold">A 小計</td><td class="right bold">' + (15000 + empPrice).toLocaleString() + '円</td></tr></table>';
+      '<tr><td colspan="3" class="right bold">A 小計</td><td class="right bold">' + (r.aBase + empPrice).toLocaleString() + '円</td></tr></table>';
   }
   if (r.hasB) {
     const empPrice = calcStepPrice(r.payroll, KYUYO_RATES);
@@ -1088,7 +1100,7 @@ function commonConfirmationHtml(articleNo) {
 function getContract1(r, toW) {
   const emp = r.emp;
   const empPrice = calcStepPrice(emp, ROMU_RATES);
-  const totalA = 15000 + empPrice;
+  const totalA = r.aBase + empPrice;
   return [
     '<div class="title">業 務 委 託 契 約 書</div>',
     '<p style="margin-bottom:16px;">' + (r.clientName || '　　　　　　　　　　　　') + '（以下、甲という）は、社会保険労務士齊藤事務所（以下、乙という）に対し、以下の事項を承認の上、業務委託契約を締結します。</p>',
@@ -1099,7 +1111,7 @@ function getContract1(r, toW) {
     cancellationHtml(5),
     '<div class="page-break"></div>',
     '<div class="section">6．報酬額 ※表示額は税抜きです。</div>',
-    '<table><tr><td>労務サポート契約基本料</td><td class="right">月額 15,000円</td></tr><tr><td>従業員数（月次サービス一覧A参照）' + emp + '名</td><td class="right">月額 ' + empPrice.toLocaleString() + '円</td></tr><tr class="total-row"><td class="bold">合計</td><td class="right bold">月額 ' + totalA.toLocaleString() + '円</td></tr></table>',
+    '<table><tr><td>労務サポート契約基本料</td><td class="right">月額 ' + r.aBase.toLocaleString() + '円</td></tr><tr><td>従業員数（月次サービス一覧A参照）' + emp + '名</td><td class="right">月額 ' + empPrice.toLocaleString() + '円</td></tr><tr class="total-row"><td class="bold">合計</td><td class="right bold">月額 ' + totalA.toLocaleString() + '円</td></tr></table>',
     '<p style="font-size:9pt; margin-top:6px;">※対象従業員数は労働保険年度更新、算定基礎届の対象人数に基づき、毎年８月１日から７月３１日まで適用となります。</p>',
     contractNoteHtml(r),
     commonLegalClauses(7),
@@ -1113,7 +1125,7 @@ function getContract2(r, toW) {
   const payroll = r.payroll;
   const empPriceA = calcStepPrice(emp, ROMU_RATES);
   const empPriceB = calcStepPrice(payroll, KYUYO_RATES);
-  const totalA = 15000 + empPriceA;
+  const totalA = r.aBase + empPriceA;
   return [
     '<div class="title">業 務 委 託 契 約 書</div>',
     '<p style="margin-bottom:16px;">' + (r.clientName || '　　　　　　　　　　　　') + '（以下、甲という）は、社会保険労務士齊藤事務所（以下、乙という）に対し、以下の事項を承認の上、業務委託契約を締結します。</p>',
@@ -1126,7 +1138,7 @@ function getContract2(r, toW) {
     '<div class="page-break"></div>',
     '<div class="section">7．報酬額 ※表示額は税抜きです。</div>',
     '<p><strong>【労務サポート契約の報酬額】</strong></p>',
-    '<table><tr><td>労務サポート契約基本料</td><td class="right">月額 15,000円</td></tr><tr><td>従業員数（月次サービス一覧A参照）' + emp + '名</td><td class="right">月額 ' + empPriceA.toLocaleString() + '円</td></tr><tr class="total-row"><td class="bold">合計</td><td class="right bold">月額 ' + totalA.toLocaleString() + '円</td></tr></table>',
+    '<table><tr><td>労務サポート契約基本料</td><td class="right">月額 ' + r.aBase.toLocaleString() + '円</td></tr><tr><td>従業員数（月次サービス一覧A参照）' + emp + '名</td><td class="right">月額 ' + empPriceA.toLocaleString() + '円</td></tr><tr class="total-row"><td class="bold">合計</td><td class="right bold">月額 ' + totalA.toLocaleString() + '円</td></tr></table>',
     '<p style="font-size:9pt; margin-top:6px;">※対象従業員数は労働保険年度更新、算定基礎届の対象人数に基づき、毎年８月１日から７月３１日まで適用となります。</p>',
     '<p style="margin-top:12px;"><strong>【給与計算サポート契約の報酬額】</strong></p>',
     '<table><tr class="total-row"><td class="bold">給与計算人数（月次サービス一覧B参照）' + payroll + '名</td><td class="right bold">月額 ' + empPriceB.toLocaleString() + '円</td></tr></table>',
@@ -1169,7 +1181,7 @@ function getContract4(r, toW) {
   const empPriceA = calcStepPrice(emp, ROMU_RATES);
   const empPriceC = calcShoguuEmployeePrice(empC, false);
   const rateLabelC = getShoguuRateLabel(false);
-  const totalA = 15000 + empPriceA;
+  const totalA = r.aBase + empPriceA;
   const totalC = 5000 + 10000 + empPriceC;
   return [
     '<div class="title">業 務 委 託 契 約 書</div>',
@@ -1183,7 +1195,7 @@ function getContract4(r, toW) {
     '<div class="page-break"></div>',
     '<div class="section">7．報酬額 ※表示額は税抜きです。</div>',
     '<p><strong>【労務サポート契約の報酬額】</strong></p>',
-    '<table><tr><td>労務サポート契約基本料</td><td class="right">月額 15,000円</td></tr><tr><td>従業員数（月次サービス一覧A参照）' + emp + '名</td><td class="right">月額 ' + empPriceA.toLocaleString() + '円</td></tr><tr class="total-row"><td class="bold">合計</td><td class="right bold">月額 ' + totalA.toLocaleString() + '円</td></tr></table>',
+    '<table><tr><td>労務サポート契約基本料</td><td class="right">月額 ' + r.aBase.toLocaleString() + '円</td></tr><tr><td>従業員数（月次サービス一覧A参照）' + emp + '名</td><td class="right">月額 ' + empPriceA.toLocaleString() + '円</td></tr><tr class="total-row"><td class="bold">合計</td><td class="right bold">月額 ' + totalA.toLocaleString() + '円</td></tr></table>',
     '<p style="font-size:9pt; margin-top:6px;">※対象従業員数は労働保険年度更新、算定基礎届の対象人数に基づき、毎年８月１日から７月３１日まで適用となります。</p>',
     '<p style="margin-top:12px;"><strong>【処遇改善加算サポート契約の報酬額】</strong></p>',
     '<table><tr><td>処遇改善加算サポート基本料(2-(1)の業務)</td><td class="right">月額 5,000円</td></tr><tr><td>計画書、報告書作成に要する集計及び根拠資料の作成(2-(2)～(6)の業務)</td><td class="right">月額 10,000円</td></tr><tr><td>処遇改善対象人数（月次サービス一覧C参照）' + empC + '名（' + rateLabelC + '）</td><td class="right">月額 ' + empPriceC.toLocaleString() + '円</td></tr><tr class="total-row"><td class="bold">合計</td><td class="right bold">月額 ' + totalC.toLocaleString() + '円</td></tr></table>',
@@ -1202,7 +1214,7 @@ function getContract5(r, toW) {
   const empPriceA = calcStepPrice(emp, ROMU_RATES);
   const empPriceB = calcStepPrice(payroll, KYUYO_RATES);
   const empPriceC = calcShoguuEmployeePrice(empC, true);
-  const totalA = 15000 + empPriceA;
+  const totalA = r.aBase + empPriceA;
   const totalC = 5000 + 10000 + empPriceC;
   return [
     '<div class="title">業 務 委 託 契 約 書</div>',
@@ -1233,7 +1245,7 @@ function getContract5(r, toW) {
     '<div class="page-break"></div>',
     '<div class="section">8．報酬額 ※表示額は税抜きです。</div>',
     '<p><strong>【労務サポート契約の報酬額】</strong></p>',
-    '<table><tr><td>労務サポート契約基本料</td><td class="right">月額 15,000円</td></tr><tr><td>従業員数（月次サービス一覧A参照）' + emp + '名</td><td class="right">月額 ' + empPriceA.toLocaleString() + '円</td></tr><tr class="total-row"><td class="bold">合計</td><td class="right bold">月額 ' + totalA.toLocaleString() + '円</td></tr></table>',
+    '<table><tr><td>労務サポート契約基本料</td><td class="right">月額 ' + r.aBase.toLocaleString() + '円</td></tr><tr><td>従業員数（月次サービス一覧A参照）' + emp + '名</td><td class="right">月額 ' + empPriceA.toLocaleString() + '円</td></tr><tr class="total-row"><td class="bold">合計</td><td class="right bold">月額 ' + totalA.toLocaleString() + '円</td></tr></table>',
     '<p style="font-size:9pt; margin-top:6px;">※対象従業員数は労働保険年度更新、算定基礎届の対象人数に基づき、毎年８月１日から７月３１日まで適用となります。</p>',
     '<p style="margin-top:12px;"><strong>【給与計算サポート契約の報酬額】</strong></p>',
     '<table><tr class="total-row"><td class="bold">給与計算人数（月次サービス一覧B参照）' + payroll + '名</td><td class="right bold">月額 ' + empPriceB.toLocaleString() + '円</td></tr></table>',
