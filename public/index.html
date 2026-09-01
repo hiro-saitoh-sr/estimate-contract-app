@@ -1269,7 +1269,7 @@ function rateRowsHtml(rates) {
     return '<tr><td>' + range + '</td><td class="right">' + r.price.toLocaleString() + '円/名</td></tr>';
   }).join('');
 }
-function monthlyFeeTableHtml(aBaseLabel) {
+function monthlyFeeTableHtml(aBaseLabel, includeABaseNote) {
   const officeRows = [
     ['オフィスST マイナンバープラス（お客様でご入力）','100円/名'],
     ['オフィスST マイナンバープラス（事務所入力）','200円/名'],
@@ -1306,9 +1306,11 @@ function monthlyFeeTableHtml(aBaseLabel) {
     '<div class="page-break"></div>' +
     '<h2 style="font-size:13pt; margin:14px 0 8px; color:#2E4057; border-bottom:1px solid #2E4057; padding-bottom:4px;">月次オプション</h2>' +
     '<table><tr style="background:#2E4057;color:white;"><th>項目</th><th class="right">月額・年額報酬（税抜）</th></tr>' + officeRows + '</table>' +
-    '<div style="margin-top:12px; font-size:9pt; color:#555;">※従業員単価は段階計算です。例：21名の場合、1～20名単価と21名以降の単価を組み合わせて計算します。<br>※表示額は税抜きです。消費税が別途かかります。源泉所得税は報酬額（税抜）を基準に計算します。</div>';
+    '<div style="margin-top:12px; font-size:9pt; color:#555;">※従業員単価は段階計算です。例：21名の場合、1～20名単価と21名以降の単価を組み合わせて計算します。<br>※表示額は税抜きです。消費税が別途かかります。源泉所得税は報酬額（税抜）を基準に計算します。' +
+    (includeABaseNote ? '<br>※労務サポート基本料は業務内容・契約内容により異なります。詳細はお見積書をご確認ください。' : '') +
+    '</div>';
 }
-function feeTableBodyHtml(aBaseLabel) {
+function feeTableBodyHtml(aBaseLabel, includeABaseNote) {
   const rows = [
     ['社会保険関係','新規適用届（被用者5人未満）','20,000円','35,000円'],
     ['社会保険関係','算定基礎届','13,000円','28,000円'],
@@ -1357,7 +1359,7 @@ function feeTableBodyHtml(aBaseLabel) {
     ['その他','オフィスステーション給与初期設定サポート','400,000円','800,000円'],
   ];
   const body = rows.map(r => '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td><td class="right">' + r[2] + '</td><td class="right">' + r[3] + '</td></tr>').join('');
-  return monthlyFeeTableHtml(aBaseLabel) + '<div class="page-break"></div>' +
+  return monthlyFeeTableHtml(aBaseLabel, includeABaseNote) + '<div class="page-break"></div>' +
     '<div class="title">手 続 き 料 金 表</div>' +
     '<div style="text-align:right; margin-bottom:12px;">社会保険労務士齊藤事務所</div>' +
     '<table><tr style="background:#2E4057;color:white;"><th>関係法令</th><th>手続き名</th><th class="right">継続契約あり</th><th class="right">スポット価格</th></tr>' + body + '</table>' +
@@ -1375,14 +1377,14 @@ function feeTableSectionStyle() {
     </style>
   `;
 }
-function feeTableSectionHtml(aBaseLabel) {
-  return '<div class="fee-table-section">' + feeTableBodyHtml(aBaseLabel) + '</div>';
+function feeTableSectionHtml(aBaseLabel, includeABaseNote) {
+  return '<div class="fee-table-section">' + feeTableBodyHtml(aBaseLabel, includeABaseNote) + '</div>';
 }
 function printFeeTable() {
   // 単体出力は1ページの余白も専用（2ページ以内に収めるため）
-  // 単体の料金表は入力値と連動させず、固定表記「15,000円〜」を表示する
+  // 単体の料金表は入力値と連動させず、固定表記「15,000円〜」を表示し、基本料に関する注釈を追加する
   const feeTablePageStyle = `<style>@page { size: A4; margin: 12mm 12mm !important; }</style>`;
-  printHTML(feeTablePageStyle + feeTableSectionStyle() + feeTableSectionHtml('15,000円〜'), buildPrintTitle('手続き料金表', '', false));
+  printHTML(feeTablePageStyle + feeTableSectionStyle() + feeTableSectionHtml('15,000円〜', true), buildPrintTitle('手続き料金表', '', false));
 }
 
 // ========== セット出力 ==========
