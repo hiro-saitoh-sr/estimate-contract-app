@@ -1400,7 +1400,7 @@ function printConfirmationSet() {
     '<div class="title">業 務 委 託 契 約 書（案）</div>'
   );
   const pageBreak = '<div class="page-break"></div>';
-  const setABaseLabel = (r.hasA ? r.aBase : 15000).toLocaleString() + '円';
+  const setABaseLabel = r.hasA ? (r.aBase.toLocaleString() + '円') : '15,000円〜';
   const html = estimateContentHtml(r) + pageBreak +
     detailContentHtml(r) + pageBreak +
     draftContractHtml + pageBreak +
@@ -1414,7 +1414,7 @@ function printSigningSet() {
   const contractHtml = contractContentHtml(r);
   if (!contractHtml) { alert('契約書を生成できる契約内容を選択してください'); return; }
   const pageBreak = '<div class="page-break"></div>';
-  const setABaseLabel = (r.hasA ? r.aBase : 15000).toLocaleString() + '円';
+  const setABaseLabel = r.hasA ? (r.aBase.toLocaleString() + '円') : '15,000円〜';
   const html = contractHtml + pageBreak +
     detailContentHtml(r) + pageBreak +
     feeTableSectionStyle() + feeTableSectionHtml(setABaseLabel);
