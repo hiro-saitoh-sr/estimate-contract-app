@@ -98,7 +98,7 @@
 
 - 最終更新AI: Claude Code
 - 最終更新日時: 2026-09-05（日本時間）
-- 変更内容: アプリ識別用ファビコンを設定。`public/icons/favicon.svg`（角丸正方形背景＋白文字「EC」オレンジ系`#ea580c`、portalの「SR」アイコンと同スタイル）を新規作成し、`public/index.html`の`<head>`（`<title>`直後）に`<link rel="icon" type="image/svg+xml" href="icons/favicon.svg">`を追加。manifest.jsonは存在しないため対応なし。料金計算・PDF出力ロジック・認証（`ALLOWED_EMAILS`）は無変更。ローカルで`python -m http.server`によりindex.html・favicon.svgの200配信、SVGの整形式（XMLパース）を確認済み（実ブラウザでのGoogleログイン経由の目視確認は未実施）。pushおよびFirebase Hostingへのデプロイまで実施予定。
+- 変更内容: アプリ識別用ファビコンを設定。`public/icons/favicon.svg`（角丸正方形背景＋白文字「EC」オレンジ系`#ea580c`、portalの「SR」アイコンと同スタイル）を新規作成し、`public/index.html`の`<head>`（`<title>`直後）に`<link rel="icon" type="image/svg+xml" href="icons/favicon.svg">`を追加。manifest.jsonは存在しないため対応なし。料金計算・PDF出力ロジック・認証（`ALLOWED_EMAILS`）は無変更。ローカルで`python -m http.server`によりindex.html・favicon.svgの200配信、SVGの整形式（XMLパース）を確認済み（実ブラウザでのGoogleログイン経由の目視確認は未実施）。コミット`2f8c8f5`をpush、Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ完了（`found 2 files in public`、本番URLでfavicon.svgの200配信を確認）。
 
 ### 過去の更新
 
