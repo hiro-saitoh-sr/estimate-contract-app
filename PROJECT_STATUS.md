@@ -97,8 +97,8 @@
 ## 最終更新
 
 - 最終更新AI: Claude Code
-- 最終更新日時: 2026-08-30（日本時間）
-- 変更内容: 業務委託契約書テンプレート（`getContract1`〜`5`）の【給与計算サポート契約の確認事項】を修正。「勤怠システムを使用されない場合は乙の指定するExcelに甲にてご入力いただきます」「甲は給与計算に必要な情報を給与支給日の12日前までに乙へ提供します」の2行を削除し、「勤怠の集計はお客様にて行っていただきます。給与計算に必要な勤怠情報・賃金変動データ等は、乙の指定するExcelにご入力のうえ、支給日の12日前までにご提供ください。」の1行に統合。給与計算サポート契約（B）を含む`getContract2`（共通関数`payrollClauseHtml()`）・`getContract5`（同文言をインラインで保持）の2箇所に適用。B契約を含まない`getContract1`・`3`・`4`にはこの文言自体が存在しないため変更なし。他の条項・料金計算ロジックは変更なし。jsdomによるヘッドレステストで契約書5パターン全て（B契約を含む2パターンで新文言への置換、含まない3パターンで無変更）を確認済み（実ブラウザでのGoogleログイン経由の目視確認は未実施）。コミット`09e1983`をpush、Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ完了。
+- 最終更新日時: 2026-09-05（日本時間）
+- 変更内容: アプリ識別用ファビコンを設定。`public/icons/favicon.svg`（角丸正方形背景＋白文字「EC」オレンジ系`#ea580c`、portalの「SR」アイコンと同スタイル）を新規作成し、`public/index.html`の`<head>`（`<title>`直後）に`<link rel="icon" type="image/svg+xml" href="icons/favicon.svg">`を追加。manifest.jsonは存在しないため対応なし。料金計算・PDF出力ロジック・認証（`ALLOWED_EMAILS`）は無変更。ローカルで`python -m http.server`によりindex.html・favicon.svgの200配信、SVGの整形式（XMLパース）を確認済み（実ブラウザでのGoogleログイン経由の目視確認は未実施）。pushおよびFirebase Hostingへのデプロイまで実施予定。
 
 ### 過去の更新
 
