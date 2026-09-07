@@ -26,12 +26,13 @@
 - 料金表出力の労務サポート基本料表記を用途別に分離（2026-09-01）。`monthlyFeeTableHtml()`・`feeTableBodyHtml()`・`feeTableSectionHtml()`に`aBaseLabel`引数を追加し、呼び出し元で表示文言を指定する方式に変更。単体の「料金表を出力」ボタン（`printFeeTable()`）は固定表記「15,000円〜」を渡すのみで入力値とは連動しない。確認用セット（`printConfirmationSet()`）・締結用セット（`printSigningSet()`）は`(r.hasA ? r.aBase : 15000).toLocaleString() + '円'`で、労務サポート契約（A）にチェックがあれば入力値、チェックがなければデフォルト値「15,000円」を表示する。B（給与計算）・C（処遇改善加算）の料金表部分・既存の料金計算ロジックは変更なし。Node（vm）でDOMをスタブした単体テストにより、単体出力が常に「15,000円〜」・セット出力がA未チェック時「15,000円」／チェック時は入力値（例：22,000円）になること、B・C部分が変化しないことを確認済み（ブラウザでのログイン後の実機確認は未実施）。Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ済み（2026-09-01、`firebase deploy --only hosting:estimateContract --project task-app-493716`、「found 1 files in public」でindex.html以外は含まれないことを確認）。
 - 月次報酬一覧（単体の「料金表を出力」ボタンのみ）に労務サポート基本料に関する注釈を追加（2026-09-01）。`monthlyFeeTableHtml()`・`feeTableBodyHtml()`・`feeTableSectionHtml()`に`includeABaseNote`引数を追加し、`true`が渡されたときのみ既存の注釈末尾（「源泉所得税は報酬額（税抜）を基準に計算します。」の後）に「※労務サポート基本料は業務内容・契約内容により異なります。詳細はお見積書をご確認ください。」を追加する方式に変更。`printFeeTable()`のみ`feeTableSectionHtml('15,000円〜', true)`で`true`を渡し、確認用セット（`printConfirmationSet()`）・締結用セット（`printSigningSet()`）は第2引数を渡さない（`undefined`のため注釈は表示されない）。月次報酬一覧はコード上3つの出力（単体・確認用セット・締結用セット）で共通の関数を使うため、表示範囲について利用者に確認したところ「単体出力のみ」との回答を得て実装。B（給与計算）・C（処遇改善加算）の料金表部分・既存の料金計算ロジックは変更なし。Node（vm）による単体テストで、単体出力（`includeABaseNote=true`）にのみ注釈が末尾に追加され、セット出力相当（引数省略・`false`明示の両方）では追加されないことを確認済み（ブラウザでのログイン後の実機確認は未実施）。Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ済み（2026-09-01、`firebase deploy --only hosting:estimateContract --project task-app-493716`、「found 1 files in public」でindex.html以外は含まれないことを確認）。
 - 確認用セット（`printConfirmationSet()`）・締結用セット（`printSigningSet()`）の料金表で、労務サポート契約（A）未チェック時の基本料表記を「15,000円」から「15,000円〜」に変更（2026-09-02）。`setABaseLabel`の算出を`(r.hasA ? r.aBase : 15000).toLocaleString() + '円'`から`r.hasA ? (r.aBase.toLocaleString() + '円') : '15,000円〜'`に変更。チェックあり時（入力値表示）の挙動は変更なし。単体の「料金表を出力」ボタン（`printFeeTable()`、固定表記「15,000円〜」＋注釈）・B（給与計算）／C（処遇改善加算）の料金表部分・既存の料金計算ロジックは変更なし。Node上での埋め込みスクリプト構文チェック済み（ブラウザでのログイン後の実機確認は未実施）。Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ済み（2026-09-02、`firebase deploy --only hosting:estimateContract`、「found 1 files in public」でindex.html以外は含まれないことを確認）。
+- 月次オプションに「オフィスST 給与（B契約あり）」100円/名を追加、月次報酬一覧の注釈に給与計算ソフトに関する1行を追加（2026-09-07）。①`ostItems`配列（`calc()`内）・チェックボックスHTML・`monthlyFeeTableHtml()`内`officeRows`配列の3箇所に、既存の「オフィスST 給与（A契約あり）200円/名」の直前へ`id: 'ostKyuyoB'`のエントリを追加（`unit: 'payroll'`のため既存の共有入力欄`payrollCount`をそのまま使用、人数入力欄は新設していない）。見積書（`estimateContentHtml()`）・料金計算明細（`detailBreakdownHtml()`）は`calcResult.items`を汎用的に走査する既存実装のため、コード変更なしでチェック時に自動反映される。②`monthlyFeeTableHtml()`内の注釈末尾（`includeABaseNote`条件分岐の後）に「※給与計算ソフトについてはご希望に応じてご相談ください。」を無条件で追加し、`feeTableSectionHtml()`を共有する単体出力（`printFeeTable()`）・確認用セット（`printConfirmationSet()`）・締結用セット（`printSigningSet()`）の3出力すべてに反映されるようにした。業務委託契約書テンプレート（`getContract1`〜`5`）は既存の月次オプション項目と同様に元々OST項目を参照していないため変更なし。既存の料金計算ロジック・他の項目・A/B/C契約の計算は変更なし。検証: (1) `new Function()`による埋め込みスクリプト2ブロックの構文チェック、(2) Node.js＋jsdom（労働条件通知書アプリ側にインストール済みのものを一時的に借用、確認後は同アプリ側のファイルを削除しリポジトリには含めていない）で`public/index.html`を実際に読み込み・実行し、新項目単体でのチェック時の金額（3名×100円＝300円）、既存の「A契約あり」項目と併用時の相互非干渉（B=300円・A=600円）、見積書・料金計算明細への自動反映、単体・一式セット両方の月次報酬一覧への新項目行・新注釈の反映、新項目のチェック解除後に他項目が影響を受けないことを確認済み（ブラウザでのログイン後の実機確認は未実施）。
 
 ## Git状態
 
 - 対象ブランチ: `main`
-- 直近コミット: `096590c`（一式セットの料金表で労務サポート未選択時の基本料を「15,000円〜」に変更）
-- 2026-09-02確認時点で `origin/main` と同期済み（ahead 0 / behind 0）、Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ完了
+- 直近コミット: `8463432`（月次オプションにオフィスST給与（B契約あり）を追加・料金表に給与ソフト注釈を追加）
+- 2026-09-07確認時点で `origin/main` と同期済み（ahead 0 / behind 0）、Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ完了
 
 ## Git管理方針
 
@@ -97,8 +98,8 @@
 ## 最終更新
 
 - 最終更新AI: Claude Code
-- 最終更新日時: 2026-09-05（日本時間）
-- 変更内容: アプリ識別用ファビコンを設定。`public/icons/favicon.svg`（角丸正方形背景＋白文字「EC」オレンジ系`#ea580c`、portalの「SR」アイコンと同スタイル）を新規作成し、`public/index.html`の`<head>`（`<title>`直後）に`<link rel="icon" type="image/svg+xml" href="icons/favicon.svg">`を追加。manifest.jsonは存在しないため対応なし。料金計算・PDF出力ロジック・認証（`ALLOWED_EMAILS`）は無変更。ローカルで`python -m http.server`によりindex.html・favicon.svgの200配信、SVGの整形式（XMLパース）を確認済み（実ブラウザでのGoogleログイン経由の目視確認は未実施）。コミット`2f8c8f5`をpush、Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ完了（`found 2 files in public`、本番URLでfavicon.svgの200配信を確認）。
+- 最終更新日時: 2026-09-07（日本時間）
+- 変更内容: 月次オプションに「オフィスST 給与（B契約あり）」100円/名を、既存の「オフィスST 給与（A契約あり）200円/名」の直前に追加（チェックボックス・`calc()`内`ostItems`配列・`monthlyFeeTableHtml()`内`officeRows`配列の3箇所）。人数入力は既存の共有`payrollCount`欄をそのまま使用し、見積書・料金計算明細への反映は既存実装（`calcResult.items`の汎用走査）により自動対応。月次報酬一覧（単体・一式セット両方）の注釈末尾に「※給与計算ソフトについてはご希望に応じてご相談ください。」を追加。既存の料金計算ロジック・他の月次オプション項目・契約書テンプレートは無変更。Node.js＋jsdom（労働条件通知書アプリ側のものを一時的に借用、検証後は削除・リポジトリに含めず）で新項目単体の金額計算、既存項目との併用、見積書・料金明細・単体/一式セット両方の月次報酬一覧への反映を確認済み（ブラウザでのログイン後の実機確認は未実施）。コミット`8463432`をpush、Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ完了。
 
 ### 過去の更新
 
