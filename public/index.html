@@ -58,6 +58,10 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: #2E4057
 .spot-item-main { font-weight: bold; color: #1a2433; font-size: 15px; }
 .spot-item-meta { font-size: 13px; color: #4a5568; margin-top: 4px; }
 .spot-item-manual { color: #8A5A00; }
+.spot-item-name { cursor: pointer; border-bottom: 1px dashed transparent; }
+.spot-item-name:hover { border-bottom-color: #8795A1; }
+.spot-item-name-edit-mark { font-size: 12px; font-weight: normal; color: #8795A1; margin-left: 4px; }
+.spot-item-name-input { font-size: 14px; font-weight: bold; padding: 3px 6px; width: 70%; }
 /* display:flexが[hidden]のUA既定（display:none）より優先されてしまうため明示的に上書きする */
 .login-screen[hidden] { display: none; }
 .login-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #e8edf2; padding: 20px; }
@@ -1313,6 +1317,7 @@ function monthlyFeeTableHtml(aBaseLabel, includeABaseNote) {
     '<div style="margin-top:12px; font-size:9pt; color:#555;">※従業員単価は段階計算です。例：21名の場合、1～20名単価と21名以降の単価を組み合わせて計算します。<br>※表示額は税抜きです。消費税が別途かかります。源泉所得税は報酬額（税抜）を基準に計算します。' +
     (includeABaseNote ? '<br>※労務サポート基本料は業務内容・契約内容により異なります。詳細はお見積書をご確認ください。' : '') +
     '<br>※給与計算ソフトについてはご希望に応じてご相談ください。' +
+    '<br>※オフィスSTへの直接問い合わせは無料です。弊所経由でのサポートは5,000円/社となります。' +
     '</div>';
 }
 function feeTableBodyHtml(aBaseLabel, includeABaseNote) {
@@ -1475,6 +1480,10 @@ const PROCEDURE_FEES = [
 ];
 let spotItems = [];
 let spotResult = {};
+// 明細の手続き名（手続き名をクリックして編集した場合はその名前、未編集なら料金表の名前）。
+function spotItemName(item) {
+  return item.customName || item.procedure.name;
+}
 function getSpotUnit(procedure, type) {
   return type === 'customer' ? procedure.customer : procedure.spot;
 }
@@ -1529,6 +1538,9 @@ function calcWithholding(subtotal, enabled) {
 function syncSpotItemsFromChecklist(showAlert = true) {
   const type = document.getElementById('spotCustomerType').value;
   const manualItems = spotItems.filter(item => item.manual);
+  // チェック・件数・対象区分の変更で明細を作り直しても、編集済みの手続き名は引き継ぐ。
+  const customNames = new Map();
+  spotItems.forEach(item => { if (item.checklist && item.customName) customNames.set(item.procedure, item.customName); });
   const checks = Array.from(document.querySelectorAll('.spot-procedure-check:checked'));
   const checkedItems = [];
   const skipped = [];
@@ -1542,7 +1554,7 @@ function syncSpotItemsFromChecklist(showAlert = true) {
     }
     const qtyInput = document.querySelector('.spot-procedure-qty[data-index="' + index + '"]');
     const qty = Math.max(1, parseInt(qtyInput && qtyInput.value) || 1);
-    checkedItems.push({ procedure, type, qty, unit, amount: qty * unit, checklist: true });
+    checkedItems.push({ procedure, type, qty, unit, amount: qty * unit, checklist: true, customName: customNames.get(procedure) || '' });
   });
   spotItems = checkedItems.concat(manualItems);
   summarizeSpotItems();
@@ -1616,7 +1628,7 @@ function renderSpotItems() {
   let rows = spotItems.map((item, index) => {
     const typeLabel = item.type === 'manual' ? '手入力' : (item.type === 'customer' ? '顧問先料金' : 'スポット価格');
     const typeClass = item.type === 'manual' ? ' spot-item-manual' : '';
-    return '<tr><td><div class="spot-item-main">' + (index + 1) + '. ' + item.procedure.name + '</div>' +
+    return '<tr><td><div class="spot-item-main">' + (index + 1) + '. <span class="spot-item-name" title="クリックで手続き名を編集" onclick="startSpotItemNameEdit(' + index + ', this)">' + escapeHtml(spotItemName(item)) + '<span class="spot-item-name-edit-mark">✎</span></span></div>' +
       '<div class="spot-item-meta' + typeClass + '">' + typeLabel + '：<input type="number" min="1" value="' + item.qty + '" onchange="updateSpotItemQty(' + index + ', this.value)" style="width:64px; padding:3px 6px; font-size:12px; margin:0 3px;">件/名 × ' + item.unit.toLocaleString() + '円</div></td>' +
       '<td class="amount">' + formatYen(item.amount) + '</td><td><button class="btn" style="background:#D64545;color:white;padding:5px 8px;font-size:11px;" onclick="removeSpotItem(' + index + ')">削除</button></td></tr>';
   }).join('');
@@ -1644,6 +1656,35 @@ function updateSpotItemQty(index, value) {
   }
   summarizeSpotItems();
   renderSpotItems();
+}
+// 手続き名をクリックすると入力欄に切り替えて直接編集する（Enter・フォーカス外しで確定、Escで取消）。
+// 空欄または料金表の名前と同じにした場合は料金表の名前に戻す。金額・単価は変更しない。
+function startSpotItemNameEdit(index, el) {
+  const item = spotItems[index];
+  if (!item) return;
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'spot-item-name-input';
+  input.value = spotItemName(item);
+  let done = false;
+  const finish = (save) => {
+    if (done) return;
+    done = true;
+    if (save) {
+      const name = input.value.trim();
+      item.customName = name && name !== item.procedure.name ? name : '';
+    }
+    summarizeSpotItems();
+    renderSpotItems();
+  };
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); finish(true); }
+    else if (e.key === 'Escape') { e.preventDefault(); finish(false); }
+  });
+  input.addEventListener('blur', () => finish(true));
+  el.replaceWith(input);
+  input.focus();
+  input.select();
 }
 function removeSpotItem(index) {
   if (!spotItems[index]) return;
@@ -1685,7 +1726,7 @@ function spotDocumentHtml(kind) {
   const target = r.targetMonth ? '<br>対象年月：' + r.targetMonth : '';
   const officeClass = kind === 'receipt' ? 'doc-office receipt-office' : 'doc-office';
   const officeHtml = officeInfoHtml(kind !== 'receipt');
-  const itemRows = r.items.map(item => '<tr><td>' + item.procedure.name + '</td><td class="right">' + item.qty + '</td><td class="right">' + item.unit.toLocaleString() + '円</td><td class="right">' + item.amount.toLocaleString() + '円</td></tr>').join('');
+  const itemRows = r.items.map(item => '<tr><td>' + escapeHtml(spotItemName(item)) + '</td><td class="right">' + item.qty + '</td><td class="right">' + item.unit.toLocaleString() + '円</td><td class="right">' + item.amount.toLocaleString() + '円</td></tr>').join('');
   return '<div class="title">' + heading + '</div>' +
     '<table class="doc-header"><tr>' +
     '<td class="doc-client"><div style="font-size:13.5pt; font-weight:bold; border-bottom:1px solid #CBD5E1; padding-bottom:8px;">' + (r.clientName || '　　　　　　　　　　　　') + ' 御中</div>' +
