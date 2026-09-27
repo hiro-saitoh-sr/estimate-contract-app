@@ -557,18 +557,6 @@ function validateMonthlyOutput(kind) {
   }
   return true;
 }
-function validateSpotOutput() {
-  summarizeSpotItems();
-  const missing = [];
-  if (!getInputValue('clientName')) missing.push('顧問先名');
-  if (!getInputValue('spotTargetMonth')) missing.push('対象年月');
-  if (!spotItems.length) missing.push('請求する手続き');
-  if (missing.length > 0) {
-    alertMissing(missing);
-    return false;
-  }
-  return true;
-}
 
 let calcResult = {};
 
@@ -1484,6 +1472,11 @@ let spotResult = {};
 function spotItemName(item) {
   return item.customName || item.procedure.name;
 }
+// 手続き選択一覧の金額表示（例：（継続: 2,500円／スポット: 8,000円））。料金設定が無い区分は「設定なし」。
+function spotPriceLabel(procedure) {
+  const fmt = v => v == null ? '設定なし' : v.toLocaleString() + '円';
+  return '（継続: ' + fmt(procedure.customer) + '／スポット: ' + fmt(procedure.spot) + '）';
+}
 function getSpotUnit(procedure, type) {
   return type === 'customer' ? procedure.customer : procedure.spot;
 }
@@ -1504,7 +1497,7 @@ function renderSpotProcedureChecklist() {
     const categoryHeader = p.category !== currentCategory ? (currentCategory = p.category, '<div class="spot-category-header" data-category="' + escapeHtml(p.category) + '" style="font-weight:bold;color:#2E4057;margin:8px 0 4px;">' + p.category + '</div>') : '';
     return categoryHeader + '<label class="checkbox-item spot-procedure-row" data-search="' + escapeHtml((p.category + ' ' + p.name).toLowerCase()) + '" style="align-items:flex-start; gap:8px; padding:6px 0;">' +
       '<input type="checkbox" class="spot-procedure-check" value="' + i + '" onchange="syncSpotItemsFromChecklist()" ' + (disabled ? 'disabled' : '') + (!disabled && prev.checked ? ' checked' : '') + '>' +
-      '<span style="flex:1;">' + p.name + '<br><span style="font-size:11px;color:#66788A;">単価：' + (disabled ? '設定なし' : unit.toLocaleString() + '円') + '</span></span>' +
+      '<span style="flex:1;">' + p.name + '<span style="font-size:12px;color:#66788A;">' + spotPriceLabel(p) + '</span></span>' +
       '<input type="number" class="spot-procedure-qty" data-index="' + i + '" min="1" value="' + prev.qty + '" onchange="syncSpotItemsFromChecklist()" style="width:72px; padding:4px 6px;">' +
       '</label>';
   }).join('');
@@ -1745,18 +1738,17 @@ function spotDocumentHtml(kind) {
     '<tr class="total-row"><td colspan="3" class="right bold">合計</td><td class="right bold">' + r.total.toLocaleString() + '円</td></tr></table>' +
     '<div style="font-size:9pt; color:#555; margin-top:8px;">※表示額は税込です。源泉所得税は報酬額（税抜）を基準に計算しています。</div>';
 }
+// スポット帳票はボタン押下で直接出力する（2026-09-28、出力前の未入力確認ダイアログを廃止）。
+// 明細が1件も無い場合のみspotDocumentHtml()側で案内して出力しない。
 function printSpotEstimate() {
-  if (!validateSpotOutput()) return;
   const html = spotDocumentHtml('estimate');
   if (html) printHTML(html, buildPrintTitle('お見積書(スポット報酬)', spotResult.clientName));
 }
 function printSpotInvoice() {
-  if (!validateSpotOutput()) return;
   const html = spotDocumentHtml('invoice');
   if (html) printHTML(html, buildPrintTitle('ご請求書', spotResult.clientName));
 }
 function printSpotReceipt() {
-  if (!validateSpotOutput()) return;
   const html = spotDocumentHtml('receipt');
   if (html) printHTML(html, buildPrintTitle('領収書', spotResult.clientName));
 }
