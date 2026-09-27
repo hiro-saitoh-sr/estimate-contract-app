@@ -1386,8 +1386,10 @@ function printFeeTable() {
 }
 
 // ========== セット出力 ==========
+// セット出力はボタン押下で直接出力する（2026-09-28、未入力項目の確認ダイアログ
+// 〈validateMonthlyOutput()〉を廃止）。従来どおり出力前にcalc()で最新の入力内容を反映する。
 function printConfirmationSet() {
-  if (!validateMonthlyOutput('contract')) return;
+  calc();
   if (!calcResult.items) { alert('サービスを選択してください'); return; }
   const r = calcResult;
   const contractHtml = contractContentHtml(r);
@@ -1406,7 +1408,7 @@ function printConfirmationSet() {
   printHTML(html, buildPrintTitle('お見積書一式', r.clientName));
 }
 function printSigningSet() {
-  if (!validateMonthlyOutput('contract')) return;
+  calc();
   if (!calcResult.items) { alert('サービスを選択してください'); return; }
   const r = calcResult;
   const contractHtml = contractContentHtml(r);
