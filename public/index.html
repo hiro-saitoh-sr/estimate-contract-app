@@ -152,6 +152,22 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: #2E4057
       <textarea id="contractNote" placeholder="契約書に追加したい補足があれば入力してください" onchange="calc()"></textarea>
     </div>
   </div>
+  <div class="form-row">
+    <div>
+      <label>割引名（見積書のみ）</label>
+      <input type="text" id="estimateDiscountLabel" placeholder="例：〇〇様ご紹介割引" onchange="calc()">
+    </div>
+    <div>
+      <label>割引額（税抜・見積書のみ）</label>
+      <input type="number" id="estimateDiscountAmount" min="0" value="0" onchange="calc()">
+    </div>
+  </div>
+  <div class="form-row single">
+    <div>
+      <label>見積書備考</label>
+      <textarea id="estimateNote" placeholder="見積書の末尾に表示する備考があれば入力してください（契約書・料金明細には表示されません）" onchange="calc()"></textarea>
+    </div>
+  </div>
 </div>
 
 <!-- 契約サービス -->
@@ -671,6 +687,9 @@ function calc() {
     contractStart: document.getElementById('contractStart').value,
     contractEnd: document.getElementById('contractEnd').value,
     contractNote: document.getElementById('contractNote') ? document.getElementById('contractNote').value : '',
+    estimateDiscountLabel: getInputValue('estimateDiscountLabel'),
+    estimateDiscountAmount: Math.max(0, parseInt(document.getElementById('estimateDiscountAmount').value) || 0),
+    estimateNote: document.getElementById('estimateNote').value,
   };
 }
 
@@ -856,6 +875,21 @@ function estimateContentHtml(r) {
     `<tr><td>${i.label}</td><td class="right">${i.amount.toLocaleString()}円</td></tr>`
   ).join('');
 
+  // 見積書のみの割引（料金明細・契約書はcalc()の金額のまま）。割引後小計で税・源泉を算出する
+  const discount = Math.min(r.estimateDiscountAmount || 0, r.subtotal);
+  const subtotal = r.subtotal - discount;
+  const tax = Math.floor(subtotal * 0.1);
+  const gensen = subtotal <= 1000000 ? Math.floor(subtotal * 0.1021) : Math.floor((subtotal - 1000000) * 0.2042) + 102100;
+  const total = subtotal + tax - gensen;
+  const discountRows = discount > 0
+    ? `<tr><td class="right bold">小計（割引前・税抜）</td><td class="right bold">${r.subtotal.toLocaleString()}円</td></tr>
+    <tr class="discount-row"><td class="right"><strong>${escapeHtml(r.estimateDiscountLabel || '割引')}</strong></td><td class="right"><strong>△${discount.toLocaleString()}円</strong></td></tr>`
+    : '';
+  const note = (r.estimateNote || '').trim();
+  const noteHtml = note
+    ? '<div class="section-note">［備考］</div><p>' + escapeHtml(note).replace(/\r?\n/g, '<br>') + '</p>'
+    : '';
+
   return `
   <div class="title">お 見 積 書</div>
   <table class="info-table" style="margin-bottom:16px;">
@@ -876,15 +910,17 @@ function estimateContentHtml(r) {
   <table style="margin-bottom:4px;">
     <tr style="background:#2E4057; color:white;"><th>サービス内容</th><th style="width:150px;" class="right">月額（税抜）</th></tr>
     ${rows}
-    <tr><td class="right bold">小計（税抜）</td><td class="right bold">${r.subtotal.toLocaleString()}円</td></tr>
-    <tr><td class="right">消費税（10%）</td><td class="right">${r.tax.toLocaleString()}円</td></tr>
-    <tr><td class="right">源泉所得税</td><td class="right">△${r.gensen.toLocaleString()}円</td></tr>
-    <tr class="total-row"><td class="right bold">金額(月次報酬)</td><td class="right bold">${r.total.toLocaleString()}円</td></tr>
+    ${discountRows}
+    <tr><td class="right bold">小計（税抜）</td><td class="right bold">${subtotal.toLocaleString()}円</td></tr>
+    <tr><td class="right">消費税（10%）</td><td class="right">${tax.toLocaleString()}円</td></tr>
+    <tr><td class="right">源泉所得税</td><td class="right">△${gensen.toLocaleString()}円</td></tr>
+    <tr class="total-row"><td class="right bold">金額(月次報酬)</td><td class="right bold">${total.toLocaleString()}円</td></tr>
   </table>
   <div style="font-size:9pt; color:#555; margin-top:6px;">
     ※表示額は月額です。口座振替はサービス提供翌月22日（休日の場合は後日）<br>
     ※手続き費用は別途手続き料金表に基づきご請求いたします
-  </div>`;
+  </div>
+  ${noteHtml}`;
 }
 function printEstimate() {
   if (!validateMonthlyOutput('estimate')) return;
