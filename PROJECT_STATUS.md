@@ -105,7 +105,7 @@
 
 - 最終更新AI: Claude Code
 - 最終更新日時: 2026-10-14（日本時間）
-- 変更内容: 見積書の割引（割引名・割引額）を料金明細の合計欄と契約書全5パターンの報酬額（【割引】表）にも反映。割引入力が無い場合は従来どおり。見積書備考・料金計算ロジックは無変更。
+- 変更内容: 見積書の割引（割引名・割引額）を料金明細の合計欄と契約書全5パターンの報酬額（【割引】表）にも反映。割引入力が無い場合は従来どおり。見積書備考・料金計算ロジックは無変更。コミット`78b417c`をpush、Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ完了（`firebase deploy --only hosting:estimateContract --project task-app-493716`、公開ページに`contractDiscountHtml`が含まれることを確認）。
 
 ### 過去の更新
 
