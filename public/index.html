@@ -154,11 +154,11 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: #2E4057
   </div>
   <div class="form-row">
     <div>
-      <label>割引名（見積書のみ）</label>
+      <label>割引名</label>
       <input type="text" id="estimateDiscountLabel" placeholder="例：〇〇様ご紹介割引" onchange="calc()">
     </div>
     <div>
-      <label>割引額（税抜・見積書のみ）</label>
+      <label>割引額（税抜）</label>
       <input type="number" id="estimateDiscountAmount" min="0" value="0" onchange="calc()">
     </div>
   </div>
@@ -856,13 +856,29 @@ function detailBreakdownHtml(r) {
   return html;
 }
 
+// 割引（見積書・料金明細・契約書に表示）。calc()の金額は変えず、割引後小計で税・源泉を算出する
+function discountedTotals(r) {
+  const discount = Math.min(r.estimateDiscountAmount || 0, r.subtotal);
+  const subtotal = r.subtotal - discount;
+  const tax = Math.floor(subtotal * 0.1);
+  const gensen = subtotal <= 1000000 ? Math.floor(subtotal * 0.1021) : Math.floor((subtotal - 1000000) * 0.2042) + 102100;
+  return { discount, subtotal, tax, gensen, total: subtotal + tax - gensen };
+}
+function discountRowsHtml(r, discount) {
+  if (discount <= 0) return '';
+  return '<tr><td class="right bold">小計（割引前・税抜）</td><td class="right bold">' + r.subtotal.toLocaleString() + '円</td></tr>' +
+    '<tr class="discount-row"><td class="right"><strong>' + escapeHtml(r.estimateDiscountLabel || '割引') + '</strong></td><td class="right"><strong>△' + discount.toLocaleString() + '円</strong></td></tr>';
+}
+
 function detailTotalHtml(r) {
+  const t = discountedTotals(r);
   return '<div class="section">合計</div>' +
     '<table>' +
-    '<tr><td class="right bold">小計（税抜）</td><td class="right bold">' + r.subtotal.toLocaleString() + '円</td></tr>' +
-    '<tr><td class="right">消費税（10%）</td><td class="right">' + r.tax.toLocaleString() + '円</td></tr>' +
-    '<tr><td class="right">源泉所得税（' + (r.subtotal <= 1000000 ? '10.21%' : '超過額×20.42%＋102,100円') + '）</td><td class="right">△' + r.gensen.toLocaleString() + '円</td></tr>' +
-    '<tr class="total-row"><td class="right bold">お振替月額（税込）</td><td class="right bold">' + r.total.toLocaleString() + '円</td></tr>' +
+    discountRowsHtml(r, t.discount) +
+    '<tr><td class="right bold">小計（税抜）</td><td class="right bold">' + t.subtotal.toLocaleString() + '円</td></tr>' +
+    '<tr><td class="right">消費税（10%）</td><td class="right">' + t.tax.toLocaleString() + '円</td></tr>' +
+    '<tr><td class="right">源泉所得税（' + (t.subtotal <= 1000000 ? '10.21%' : '超過額×20.42%＋102,100円') + '）</td><td class="right">△' + t.gensen.toLocaleString() + '円</td></tr>' +
+    '<tr class="total-row"><td class="right bold">お振替月額（税込）</td><td class="right bold">' + t.total.toLocaleString() + '円</td></tr>' +
     '</table>';
 }
 // ========== 見積書 ==========
@@ -875,16 +891,8 @@ function estimateContentHtml(r) {
     `<tr><td>${i.label}</td><td class="right">${i.amount.toLocaleString()}円</td></tr>`
   ).join('');
 
-  // 見積書のみの割引（料金明細・契約書はcalc()の金額のまま）。割引後小計で税・源泉を算出する
-  const discount = Math.min(r.estimateDiscountAmount || 0, r.subtotal);
-  const subtotal = r.subtotal - discount;
-  const tax = Math.floor(subtotal * 0.1);
-  const gensen = subtotal <= 1000000 ? Math.floor(subtotal * 0.1021) : Math.floor((subtotal - 1000000) * 0.2042) + 102100;
-  const total = subtotal + tax - gensen;
-  const discountRows = discount > 0
-    ? `<tr><td class="right bold">小計（割引前・税抜）</td><td class="right bold">${r.subtotal.toLocaleString()}円</td></tr>
-    <tr class="discount-row"><td class="right"><strong>${escapeHtml(r.estimateDiscountLabel || '割引')}</strong></td><td class="right"><strong>△${discount.toLocaleString()}円</strong></td></tr>`
-    : '';
+  const { discount, subtotal, tax, gensen, total } = discountedTotals(r);
+  const discountRows = discountRowsHtml(r, discount);
   const note = (r.estimateNote || '').trim();
   const noteHtml = note
     ? '<div class="section-note">［備考］</div><p>' + escapeHtml(note).replace(/\r?\n/g, '<br>') + '</p>'
@@ -1046,6 +1054,16 @@ function contractNoteHtml(r) {
   return '<div class="section-note">［補足］</div><p>' + escapeHtml(note).replace(/\r?\n/g, '<br>') + '</p>';
 }
 
+// 契約書の報酬額の後に割引を表示（割引入力が無い場合は何も出さない）。金額は税抜
+function contractDiscountHtml(r, grossTotal) {
+  const discount = Math.min(r.estimateDiscountAmount || 0, grossTotal);
+  if (discount <= 0) return '';
+  return '<p style="margin-top:12px;"><strong>【割引】</strong></p>' +
+    '<table><tr><td>報酬額合計（割引前）</td><td class="right">月額 ' + grossTotal.toLocaleString() + '円</td></tr>' +
+    '<tr class="discount-row"><td>' + escapeHtml(r.estimateDiscountLabel || '割引') + '</td><td class="right">△' + discount.toLocaleString() + '円</td></tr>' +
+    '<tr class="total-row"><td class="bold">報酬額合計（割引後）</td><td class="right bold">月額 ' + (grossTotal - discount).toLocaleString() + '円</td></tr></table>';
+}
+
 function feeRevisionHtml(articleNo) {
   return '<div class="section">' + articleNo + '．報酬の改定</div>' +
     '<p>乙は、報酬額を改定する場合、甲に対して改定日の２ヶ月前までに書面又は電磁的方法により通知するものとします。</p>';
@@ -1142,6 +1160,7 @@ function getContract1(r, toW) {
     '<div class="section">6．報酬額 ※表示額は税抜きです。</div>',
     '<table><tr><td>労務サポート契約基本料</td><td class="right">月額 ' + r.aBase.toLocaleString() + '円</td></tr><tr><td>従業員数（月次サービス一覧A参照）' + emp + '名</td><td class="right">月額 ' + empPrice.toLocaleString() + '円</td></tr><tr class="total-row"><td class="bold">合計</td><td class="right bold">月額 ' + totalA.toLocaleString() + '円</td></tr></table>',
     '<p style="font-size:9pt; margin-top:6px;">※対象従業員数は労働保険年度更新、算定基礎届の対象人数に基づき、毎年８月１日から７月３１日まで適用となります。</p>',
+    contractDiscountHtml(r, totalA),
     contractNoteHtml(r),
     commonLegalClauses(7),
     '<div class="page-break"></div>',
@@ -1172,6 +1191,7 @@ function getContract2(r, toW) {
     '<p style="margin-top:12px;"><strong>【給与計算サポート契約の報酬額】</strong></p>',
     '<table><tr class="total-row"><td class="bold">給与計算人数（月次サービス一覧B参照）' + payroll + '名</td><td class="right bold">月額 ' + empPriceB.toLocaleString() + '円</td></tr></table>',
     '<p style="font-size:9pt; margin-top:6px;">※給与計算を行った人数により報酬額を決定いたしますので、従業員の入退職により変動します。</p>',
+    contractDiscountHtml(r, totalA + empPriceB),
     contractNoteHtml(r),
     commonLegalClauses(8),
     '<div class="page-break"></div>',
@@ -1197,6 +1217,7 @@ function getContract3(r, toW) {
     '<div class="section">6．報酬額 ※表示額は税抜きです。</div>',
     '<table><tr><td>処遇改善加算サポート基本料（Aの契約なし）</td><td class="right">月額 15,000円</td></tr><tr><td>計画書、報告書作成に要する集計及び根拠資料の作成</td><td class="right">月額 10,000円</td></tr><tr><td>処遇改善対象人数（月次サービス一覧C参照）' + emp + '名（' + rateLabel + '）</td><td class="right">月額 ' + empPrice.toLocaleString() + '円</td></tr><tr class="total-row"><td class="bold">合計</td><td class="right bold">月額 ' + (cBase1 + cBase2 + empPrice).toLocaleString() + '円</td></tr></table>',
     '<p style="font-size:9pt; margin-top:6px;">※対象従業員数は実績報告時の集計人数により決定し、毎年８月１日から７月３１日まで適用となります。</p>',
+    contractDiscountHtml(r, cBase1 + cBase2 + empPrice),
     contractNoteHtml(r),
     commonLegalClauses(7),
     '<div class="page-break"></div>',
@@ -1229,6 +1250,7 @@ function getContract4(r, toW) {
     '<p style="margin-top:12px;"><strong>【処遇改善加算サポート契約の報酬額】</strong></p>',
     '<table><tr><td>処遇改善加算サポート基本料(2-(1)の業務)</td><td class="right">月額 5,000円</td></tr><tr><td>計画書、報告書作成に要する集計及び根拠資料の作成(2-(2)～(6)の業務)</td><td class="right">月額 10,000円</td></tr><tr><td>処遇改善対象人数（月次サービス一覧C参照）' + empC + '名（' + rateLabelC + '）</td><td class="right">月額 ' + empPriceC.toLocaleString() + '円</td></tr><tr class="total-row"><td class="bold">合計</td><td class="right bold">月額 ' + totalC.toLocaleString() + '円</td></tr></table>',
     '<p style="font-size:9pt; margin-top:6px;">※対象従業員数は実績報告時の集計人数により決定し、毎年８月１日から７月３１日まで適用となります。</p>',
+    contractDiscountHtml(r, totalA + totalC),
     contractNoteHtml(r),
     commonLegalClauses(8),
     '<div class="page-break"></div>',
@@ -1282,6 +1304,7 @@ function getContract5(r, toW) {
     '<p style="margin-top:12px;"><strong>【処遇改善加算サポート契約の報酬額】</strong></p>',
     '<table><tr><td>処遇改善加算サポート基本料(2-(1)の業務)</td><td class="right">月額 5,000円</td></tr><tr><td>計画書、報告書作成に要する集計及び根拠資料の作成(2-(2)～(6)の業務)</td><td class="right">月額 10,000円</td></tr><tr><td>処遇改善対象人数（月次サービス一覧C参照）' + empC + '名（給与計算委託あり・50円/名）</td><td class="right">月額 ' + empPriceC.toLocaleString() + '円</td></tr><tr class="total-row"><td class="bold">合計</td><td class="right bold">月額 ' + totalC.toLocaleString() + '円</td></tr></table>',
     '<p style="font-size:9pt; margin-top:6px;">※対象従業員数は実績報告時の集計人数により決定し、毎年８月１日から７月３１日まで適用となります。</p>',
+    contractDiscountHtml(r, totalA + empPriceB + totalC),
     contractNoteHtml(r),
     commonLegalClauses(9),
     '<div class="page-break"></div>',
