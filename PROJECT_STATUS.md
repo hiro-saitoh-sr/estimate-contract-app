@@ -105,7 +105,7 @@
 
 - 最終更新AI: Claude Code
 - 最終更新日時: 2026-11-04（日本時間）
-- 変更内容: 月次オプション「オフィスST 労務（A契約あり）」「オフィスST 給与（A契約あり）」の単価を200円/名→300円/名に改定（チェックボックス表示・`calc()`内オプション配列の`price`・`monthlyFeeTableHtml()`内`officeRows`の3箇所×2項目）。見積書・料金明細・契約書は`calcResult`経由、月次報酬一覧（単体・確認用セット・締結用セット）は`monthlyFeeTableHtml()`経由で反映。「A契約なし」（400円/名）・料金計算ロジックは無変更。JS構文チェックのみ実施（ログイン後の実機確認は未実施）。
+- 変更内容: 月次オプション「オフィスST 労務（A契約あり）」「オフィスST 給与（A契約あり）」の単価を200円/名→300円/名に改定（チェックボックス表示・`calc()`内オプション配列の`price`・`monthlyFeeTableHtml()`内`officeRows`の3箇所×2項目）。見積書・料金明細・契約書は`calcResult`経由、月次報酬一覧（単体・確認用セット・締結用セット）は`monthlyFeeTableHtml()`経由で反映。「A契約なし」（400円/名）・料金計算ロジックは無変更。JS構文チェックのみ実施（ログイン後の実機確認は未実施）。コミット`7e15e9b`をpush、Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ完了（`firebase deploy --only hosting:estimateContract --project task-app-493716`、公開ページで両項目が300円/名になっていることを確認）。
 
 ### 過去の更新
 
