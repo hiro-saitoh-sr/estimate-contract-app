@@ -1313,6 +1313,11 @@ function getContract5(r, toW) {
 }
 
 // ========== 手続き料金表 ==========
+// 料金表（月次報酬一覧・手続き料金表）の右上に表示する出力日（例：2026年10月12日現在）
+function feeTableAsOfDateText() {
+  const d = new Date();
+  return d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日現在';
+}
 function rateRowsHtml(rates) {
   let prev = 0;
   return rates.map(r => {
@@ -1339,7 +1344,7 @@ function monthlyFeeTableHtml(aBaseLabel, includeABaseNote) {
     ['年末調整 従業員専用ダイヤル（年額）','100円/名'],
   ].map(r => '<tr><td>' + r[0] + '</td><td class="right">' + r[1] + '</td></tr>').join('');
   return '<div class="title">月 次 報 酬 一 覧</div>' +
-    '<div style="text-align:right; margin-bottom:12px;">社会保険労務士齊藤事務所</div>' +
+    '<div style="text-align:right; margin-bottom:12px;">社会保険労務士齊藤事務所<br>' + feeTableAsOfDateText() + '</div>' +
     '<h2 style="font-size:13pt; margin:14px 0 8px; color:#2E4057; border-bottom:1px solid #2E4057; padding-bottom:4px;">A. 労務サポート</h2>' +
     '<table><tr style="background:#2E4057;color:white;"><th>項目</th><th class="right">月額報酬（税抜）</th></tr>' +
     '<tr><td>基本料</td><td class="right">' + aBaseLabel + '</td></tr></table>' +
@@ -1415,7 +1420,7 @@ function feeTableBodyHtml(aBaseLabel, includeABaseNote) {
   const body = rows.map(r => '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td><td class="right">' + r[2] + '</td><td class="right">' + r[3] + '</td></tr>').join('');
   return monthlyFeeTableHtml(aBaseLabel, includeABaseNote) + '<div class="page-break"></div>' +
     '<div class="title">手 続 き 料 金 表</div>' +
-    '<div style="text-align:right; margin-bottom:12px;">社会保険労務士齊藤事務所</div>' +
+    '<div style="text-align:right; margin-bottom:12px;">社会保険労務士齊藤事務所<br>' + feeTableAsOfDateText() + '</div>' +
     '<table><tr style="background:#2E4057;color:white;"><th>関係法令</th><th>手続き名</th><th class="right">継続契約あり</th><th class="right">スポット価格</th></tr>' + body + '</table>' +
     '<div style="margin-top:12px; font-size:9pt; color:#555;">※表示額は税抜きです。消費税が別途かかります。<br>※継続契約ありは月次顧問契約（労務サポート契約）をご締結のお客様への価格です。<br>※人数が多い場合は1名あたりの加算料金が適用される場合があります。詳しくはお問い合わせください。<br>※一覧にない手続きについても対応できる場合がございます。お気軽にご相談ください。<br>※料金は案件の難易度・複雑さにより別途お見積りとなる場合があります。<br>社会保険労務士齊藤事務所　TEL：03-6325-1208</div>';
 }
