@@ -104,11 +104,12 @@
 ## 最終更新
 
 - 最終更新AI: Claude Code
-- 最終更新日時: 2026-10-14（日本時間）
-- 変更内容: 見積書の割引（割引名・割引額）を料金明細の合計欄と契約書全5パターンの報酬額（【割引】表）にも反映。割引入力が無い場合は従来どおり。見積書備考・料金計算ロジックは無変更。コミット`78b417c`をpush、Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ完了（`firebase deploy --only hosting:estimateContract --project task-app-493716`、公開ページに`contractDiscountHtml`が含まれることを確認）。
+- 最終更新日時: 2026-11-04（日本時間）
+- 変更内容: 月次オプション「オフィスST 労務（A契約あり）」「オフィスST 給与（A契約あり）」の単価を200円/名→300円/名に改定（チェックボックス表示・`calc()`内オプション配列の`price`・`monthlyFeeTableHtml()`内`officeRows`の3箇所×2項目）。見積書・料金明細・契約書は`calcResult`経由、月次報酬一覧（単体・確認用セット・締結用セット）は`monthlyFeeTableHtml()`経由で反映。「A契約なし」（400円/名）・料金計算ロジックは無変更。JS構文チェックのみ実施（ログイン後の実機確認は未実施）。
 
 ### 過去の更新
 
+- 2026-10-14（Claude Code）: 見積書の割引（割引名・割引額）を料金明細の合計欄と契約書全5パターンの報酬額（【割引】表）にも反映。割引入力が無い場合は従来どおり。見積書備考・料金計算ロジックは無変更。コミット`78b417c`をpush、Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ完了（`firebase deploy --only hosting:estimateContract --project task-app-493716`、公開ページに`contractDiscountHtml`が含まれることを確認）。
 - 2026-10-14（Claude Code）: 見積書（顧問契約）に割引入力欄（割引名・割引額、見積書のみ反映）と見積書備考欄を追加。料金計算ロジック・料金明細・契約書・契約書補足は無変更。コミット`85b9eac`をpush、Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ完了（`firebase deploy --only hosting:estimateContract --project task-app-493716`、公開ページに新入力欄が含まれることを確認）。
 - 2026-09-07（Claude Code）: 月次オプションに「オフィスST 給与（B契約あり）」100円/名を、既存の「オフィスST 給与（A契約あり）200円/名」の直前に追加（チェックボックス・`calc()`内`ostItems`配列・`monthlyFeeTableHtml()`内`officeRows`配列の3箇所）。人数入力は既存の共有`payrollCount`欄をそのまま使用し、見積書・料金計算明細への反映は既存実装（`calcResult.items`の汎用走査）により自動対応。月次報酬一覧（単体・一式セット両方）の注釈末尾に「※給与計算ソフトについてはご希望に応じてご相談ください。」を追加。既存の料金計算ロジック・他の月次オプション項目・契約書テンプレートは無変更。Node.js＋jsdom（労働条件通知書アプリ側のものを一時的に借用、検証後は削除・リポジトリに含めず）で新項目単体の金額計算、既存項目との併用、見積書・料金明細・単体/一式セット両方の月次報酬一覧への反映を確認済み（ブラウザでのログイン後の実機確認は未実施）。コミット`8463432`をpush、Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ完了。
 - 2026-08-29（Claude Code）: ①セット出力・料金表単体出力のファイル名を変更（確認用セット＝`お見積書一式`、締結用セット＝`業務委託契約書`、料金表単体は現状維持）。②確認用セットのみ契約書タイトルを「業 務 委 託 契 約 書（案）」に変更（締結用セット・単体`printContract()`は無変更）。③`getContract5`（A+B+Cパターン）の「3．処遇改善加算サポート契約」タイトル直前に改ページを追加（この見出しは`getContract5`にのみ存在するため他4パターンはコード変更なし、5パターン全て動作確認済み）。④料金表の印刷スタイルを`.fee-table-section`クラスにスコープし、単体出力・セット出力の料金表部分で同一スタイル（フォントサイズ・行間・表の余白）に統一（`@page`余白は単体出力のみ12mm、セット出力の他帳票には影響させない設計）。⑤手続き料金表の注釈末尾に2行追加（対応可否・追加見積りの案内）。既存の料金計算ロジック・スポット手続き出力（見積書/請求書/領収書）は変更なし。コミット`22c2fa9`をpush、Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ完了。
