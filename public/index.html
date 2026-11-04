@@ -262,7 +262,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: #2E4057
 <!-- PDF出力 -->
 <div class="card">
   <h2>PDF出力</h2>
-  <div style="margin-bottom:8px; font-weight:bold;">確認用セットに含める書類</div>
+  <div style="margin-bottom:8px; font-weight:bold;">確認用に含める書類</div>
   <div class="checkbox-group" id="confirmSetDocs" style="margin-bottom:12px;">
     <label class="checkbox-item"><input type="checkbox" id="confirmDocEstimate" checked> お見積書</label>
     <label class="checkbox-item"><input type="checkbox" id="confirmDocDetail" checked> 料金計算明細</label>
@@ -270,14 +270,14 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: #2E4057
     <label class="checkbox-item"><input type="checkbox" id="confirmDocFeeTable" checked> 料金表（月次報酬一覧・手続き料金表）</label>
   </div>
   <div class="btn-group">
-    <button class="btn btn-primary" onclick="printConfirmationSet()">📋 確認用セット出力</button>
+    <button class="btn btn-primary" onclick="printConfirmationSet()">📋 確認用出力</button>
     <button class="btn btn-green" onclick="printSigningSet()">✍️ 締結用セット出力</button>
     <button class="btn btn-orange" onclick="printFeeTable()">💰 料金表を出力</button>
   </div>
   <div class="notice" style="margin-top:12px;">
     ※印刷ダイアログで「PDFに保存」を選択してください<br>
     ※契約書は契約内容に応じて自動的に選択されます<br>
-    ※確認用セット出力：チェックした書類を、見積書 → 料金明細 → 契約書 → 料金表の順にまとめて出力します（A・B・C未選択時は契約書を除きます）<br>
+    ※確認用出力：チェックした書類を、見積書 → 料金明細 → 契約書 → 料金表の順にまとめて出力します（A・B・C未選択時は契約書を除きます）<br>
     ※締結用セット出力：契約書 → 料金明細 → 料金表の順にまとめて出力します
   </div>
 </div>
@@ -582,7 +582,7 @@ function validateMonthlyOutput(kind) {
 
 let calcResult = {};
 
-// 確認用セットの「業務委託契約書（案）」チェック：A・B・C未選択時は自動で外して選択不可にし、
+// 確認用出力の「業務委託契約書（案）」チェック：A・B・C未選択時は自動で外して選択不可にし、
 // 再度A・B・Cが選択されたら、自動で外した場合に限りチェックを戻す
 function updateConfirmContractCheckbox(hasContractService) {
   const cb = document.getElementById('confirmDocContract');
@@ -1496,7 +1496,7 @@ function printConfirmationSet() {
   if (want('confirmDocContract')) {
     const contractHtml = contractContentHtml(r);
     if (!contractHtml) { alert('契約書を生成できる契約内容を選択してください'); return; }
-    // 確認用セットのみ、契約書タイトルに（案）を付ける
+    // 確認用出力のみ、契約書タイトルに（案）を付ける
     parts.push(contractHtml.replace(
       '<div class="title">業 務 委 託 契 約 書</div>',
       '<div class="title">業 務 委 託 契 約 書（案）</div>'
