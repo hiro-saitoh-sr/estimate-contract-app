@@ -106,7 +106,7 @@
 
 - 最終更新AI: Claude Code
 - 最終更新日時: 2026-11-04（日本時間）
-- 変更内容: 月次報酬一覧・手続き料金表の右上「社会保険労務士齊藤事務所」の下に出力日（例：2026年11月4日現在）を自動表示。`feeTableAsOfDateText()`を追加し、`monthlyFeeTableHtml()`・`feeTableBodyHtml()`の事務所名表示に連結（単体の料金表・確認用セット・締結用セットの料金表すべてに反映）。料金計算ロジック・見積書・料金明細・契約書は無変更。Edge headlessでPDF化し、変更前後とも料金表は4ページ（月次報酬一覧2ページ・手続き料金表2ページ）でページ数の増加・はみ出しがないことを確認。デプロイ状況はpush・デプロイ後に追記。
+- 変更内容: 月次報酬一覧・手続き料金表の右上「社会保険労務士齊藤事務所」の下に出力日（例：2026年11月4日現在）を自動表示。`feeTableAsOfDateText()`を追加し、`monthlyFeeTableHtml()`・`feeTableBodyHtml()`の事務所名表示に連結（単体の料金表・確認用セット・締結用セットの料金表すべてに反映）。料金計算ロジック・見積書・料金明細・契約書は無変更。Edge headlessでPDF化し、変更前後とも料金表は4ページ（月次報酬一覧2ページ・手続き料金表2ページ）でページ数の増加・はみ出しがないことを確認。コミット`b4f02f1`をpush、Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ完了（`firebase deploy --only hosting:estimateContract --project task-app-493716`、公開ページに`feeTableAsOfDateText()`が含まれることを確認）。ログイン後の実機出力確認は未実施。
 
 ### 過去の更新
 
