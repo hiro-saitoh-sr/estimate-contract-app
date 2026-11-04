@@ -75,7 +75,6 @@
 
 ## 残っている判断事項
 
-- このアプリの Firebase Hosting はページを最大1時間ブラウザにキャッシュする設定（`Cache-Control: max-age=3600`、`firebase.json` に `no-cache` 指定なし。他アプリは `no-cache`）。2026-11-04 のアカウント追加時、パートさんがログインできないとの報告があった（本番反映は確認済みで、デプロイ前のページがブラウザに残っていた可能性。再読み込みを案内し、その後ログイン確認済み）。`firebase.json` に他アプリと同じ `no-cache` ヘッダーを追加するかは、デプロイ設定の変更のため利用者判断待ち。
 - 非公開資料をSharePointへ移動する時期と移動先フォルダ構成。
 - 公開ソース内の事務所振込先情報を将来も維持するか。
 
@@ -109,10 +108,11 @@
 
 - 最終更新AI: Claude Code
 - 最終更新日時: 2026-11-04（日本時間）
-- 変更内容: ログイン許可アカウント（`public/index.html` の `ALLOWED_EMAILS`）にパートさん `soeda@saitoh-sr.com` を追加（利用者承認済み）。`firebase deploy --only hosting:estimateContract --project task-app-493716` でデプロイし、公開ページの `ALLOWED_EMAILS` に反映されていることを確認。利用者がポータル管理設定で権限をオンにし、全アプリへのログインを確認して作業完了（2026-11-04）。
+- 変更内容: `firebase.json` の全パス（`**`）に `Cache-Control: no-cache` ヘッダーを追加（利用者承認済み）。従来は `max-age=3600` でブラウザに最大1時間キャッシュされ、2026-11-04 のアカウント追加時にパートさんがログインできない事象の原因になった可能性があったため。ポータルと同じ `**/*.@(js|css|html)` 指定ではルートURL（`/`）に効かないことを確認したので `**` に追加した。`firebase deploy --only hosting:estimateContract --project task-app-493716` でデプロイし、`/`・`/index.html`・`/icons/favicon.svg` が `no-cache` になり、COOP ヘッダーとページ本体は従来どおりであることを確認。
 
 ### 過去の更新
 
+- 2026-11-04（Claude Code）: ログイン許可アカウント（`public/index.html` の `ALLOWED_EMAILS`）にパートさん `soeda@saitoh-sr.com` を追加（利用者承認済み）。`firebase deploy --only hosting:estimateContract --project task-app-493716` でデプロイし、公開ページの `ALLOWED_EMAILS` に反映されていることを確認。利用者がポータル管理設定で権限をオンにし、全アプリへのログインを確認して作業完了（2026-11-04）。
 - 2026-11-04（Claude Code）: 確認用セット出力の画面表記を「セット」なしに変更（ボタン「確認用セット出力」→「確認用出力」、見出し「確認用セットに含める書類」→「確認用に含める書類」、説明文「確認用セット出力：」→「確認用出力：」、関連コードコメントも統一）。「締結用セット出力」・出力内容・ファイル名（`お見積書一式`等）・計算ロジックは無変更。nodeハーネスで出力内容・ファイル名が変更前と同じことを確認。コミット`fa7ad83`をpush、Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ完了（公開ページに「確認用セット」の表記が残っていないことを確認）。
 - 2026-11-04（Claude Code）: ①「月次オプション」を「システム利用サービス」に名称変更（入力画面の見出し〈旧「オフィスステーション・その他月次利用料」〉、料金計算明細の表見出し・小計、月次報酬一覧の見出し。見積書には該当見出しなし）。②確認用セット出力に書類選択チェック欄（お見積書／料金計算明細／業務委託契約書（案）／料金表、初期値は全チェック）を追加し、チェックした書類のみを従来順で1つにまとめて出力。0件時は通知のみ。ファイル名は4つ全部＝`お見積書一式`、一部＝選択書類名を「・」で連結（`printConfirmationSet()`）。③A・B・C未選択でもシステム利用サービスのみで確認用セット（見積書・料金明細・料金表）を出力可能に。A・B・C未選択時は「業務委託契約書（案）」チェックを自動で外して選択不可（`updateConfirmContractCheckbox()`、A・B・C再選択時は自動で外した場合のみチェックを戻す）。料金明細はA・B・C未選択時にシステム利用サービス前の改ページを省略。B単独選択時は従来どおり契約書を生成できない旨を通知。締結用セット・料金表単体ボタン・料金計算ロジックは無変更。nodeハーネスで各ケース（オプションのみ／一部選択／0件／全選択）を確認、Edge headlessでPDF化し全選択時のページ数が変更前と同じ12ページ、料金表は4ページのままであることを確認。コミット`526ffd7`をpush、Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ完了（`firebase deploy --only hosting:estimateContract --project task-app-493716`、公開ページに新コードが含まれることを確認）。ログイン後の実機確認は未実施。
 - 2026-11-04（Claude Code）: 月次報酬一覧・手続き料金表の右上「社会保険労務士齊藤事務所」の下に出力日（例：2026年11月4日現在）を自動表示。`feeTableAsOfDateText()`を追加し、`monthlyFeeTableHtml()`・`feeTableBodyHtml()`の事務所名表示に連結（単体の料金表・確認用セット・締結用セットの料金表すべてに反映）。料金計算ロジック・見積書・料金明細・契約書は無変更。Edge headlessでPDF化し、変更前後とも料金表は4ページ（月次報酬一覧2ページ・手続き料金表2ページ）でページ数の増加・はみ出しがないことを確認。コミット`b4f02f1`をpush、Firebase Hosting（`saitoh-sr-estimate-contract`）へデプロイ完了（`firebase deploy --only hosting:estimateContract --project task-app-493716`、公開ページに`feeTableAsOfDateText()`が含まれることを確認）。ログイン後の実機出力確認は未実施。
