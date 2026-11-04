@@ -75,6 +75,7 @@
 
 ## 残っている判断事項
 
+- このアプリの Firebase Hosting はページを最大1時間ブラウザにキャッシュする設定（`Cache-Control: max-age=3600`、`firebase.json` に `no-cache` 指定なし。他アプリは `no-cache`）。2026-11-04 のアカウント追加時、パートさんがログインできないとの報告があった（本番反映は確認済みで、デプロイ前のページがブラウザに残っていた可能性。再読み込みを案内し、その後ログイン確認済み）。`firebase.json` に他アプリと同じ `no-cache` ヘッダーを追加するかは、デプロイ設定の変更のため利用者判断待ち。
 - 非公開資料をSharePointへ移動する時期と移動先フォルダ構成。
 - 公開ソース内の事務所振込先情報を将来も維持するか。
 
@@ -108,7 +109,7 @@
 
 - 最終更新AI: Claude Code
 - 最終更新日時: 2026-11-04（日本時間）
-- 変更内容: ログイン許可アカウント（`public/index.html` の `ALLOWED_EMAILS`）にパートさん `soeda@saitoh-sr.com` を追加（利用者承認済み）。`firebase deploy --only hosting:estimateContract --project task-app-493716` でデプロイし、公開ページの `ALLOWED_EMAILS` に反映されていることを確認。
+- 変更内容: ログイン許可アカウント（`public/index.html` の `ALLOWED_EMAILS`）にパートさん `soeda@saitoh-sr.com` を追加（利用者承認済み）。`firebase deploy --only hosting:estimateContract --project task-app-493716` でデプロイし、公開ページの `ALLOWED_EMAILS` に反映されていることを確認。利用者がポータル管理設定で権限をオンにし、全アプリへのログインを確認して作業完了（2026-11-04）。
 
 ### 過去の更新
 
