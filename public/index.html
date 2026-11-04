@@ -219,9 +219,9 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: #2E4057
   </div>
 </div>
 
-<!-- オフィスST・その他月次利用料 -->
+<!-- システム利用サービス（オフィスST・その他月次利用料） -->
 <div class="card">
-  <h2>オフィスステーション・その他月次利用料</h2>
+  <h2>システム利用サービス</h2>
   <div class="notice">元Excelの月次サービス一覧にある任意項目です。顧問先の利用状況に合わせて選択してください（複数選択可）。</div>
   <div style="margin-top:12px;" class="checkbox-group">
     <label class="checkbox-item"><input type="checkbox" id="ostMyNumber1" onchange="calc()"> マイナンバープラス（お客様でご入力）100円/名</label>
@@ -262,6 +262,13 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: #2E4057
 <!-- PDF出力 -->
 <div class="card">
   <h2>PDF出力</h2>
+  <div style="margin-bottom:8px; font-weight:bold;">確認用セットに含める書類</div>
+  <div class="checkbox-group" id="confirmSetDocs" style="margin-bottom:12px;">
+    <label class="checkbox-item"><input type="checkbox" id="confirmDocEstimate" checked> お見積書</label>
+    <label class="checkbox-item"><input type="checkbox" id="confirmDocDetail" checked> 料金計算明細</label>
+    <label class="checkbox-item" id="confirmDocContractLabel"><input type="checkbox" id="confirmDocContract" checked> 業務委託契約書（案）</label>
+    <label class="checkbox-item"><input type="checkbox" id="confirmDocFeeTable" checked> 料金表（月次報酬一覧・手続き料金表）</label>
+  </div>
   <div class="btn-group">
     <button class="btn btn-primary" onclick="printConfirmationSet()">📋 確認用セット出力</button>
     <button class="btn btn-green" onclick="printSigningSet()">✍️ 締結用セット出力</button>
@@ -270,7 +277,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: #2E4057
   <div class="notice" style="margin-top:12px;">
     ※印刷ダイアログで「PDFに保存」を選択してください<br>
     ※契約書は契約内容に応じて自動的に選択されます<br>
-    ※確認用セット出力：見積書 → 料金明細 → 契約書 → 料金表の順にまとめて出力します<br>
+    ※確認用セット出力：チェックした書類を、見積書 → 料金明細 → 契約書 → 料金表の順にまとめて出力します（A・B・C未選択時は契約書を除きます）<br>
     ※締結用セット出力：契約書 → 料金明細 → 料金表の順にまとめて出力します
   </div>
 </div>
@@ -575,6 +582,25 @@ function validateMonthlyOutput(kind) {
 
 let calcResult = {};
 
+// 確認用セットの「業務委託契約書（案）」チェック：A・B・C未選択時は自動で外して選択不可にし、
+// 再度A・B・Cが選択されたら、自動で外した場合に限りチェックを戻す
+function updateConfirmContractCheckbox(hasContractService) {
+  const cb = document.getElementById('confirmDocContract');
+  if (!cb) return;
+  const label = document.getElementById('confirmDocContractLabel');
+  if (!hasContractService) {
+    if (!cb.disabled && cb.checked) cb.dataset.autoUnchecked = '1';
+    cb.checked = false;
+    cb.disabled = true;
+    if (label) label.style.opacity = '0.5';
+  } else if (cb.disabled) {
+    cb.disabled = false;
+    if (cb.dataset.autoUnchecked === '1') cb.checked = true;
+    delete cb.dataset.autoUnchecked;
+    if (label) label.style.opacity = '';
+  }
+}
+
 function calc() {
   const emp = getEmpCount();
   const payroll = getPayrollCount();
@@ -582,6 +608,8 @@ function calc() {
   const hasA = document.getElementById('serviceA').checked;
   const hasB = document.getElementById('serviceB').checked;
   const hasC = document.getElementById('serviceC').checked;
+
+  updateConfirmContractCheckbox(hasA || hasB || hasC);
 
   // A オプション表示切替
   document.getElementById('serviceABaseOptions').style.display = hasA ? 'block' : 'none';
@@ -847,11 +875,11 @@ function detailBreakdownHtml(r) {
   });
   if (optionItems.length > 0) {
     const optionRows = optionItems.map(item => '<tr><td>' + item.label + '</td><td class="right">' + item.amount.toLocaleString() + '円</td></tr>').join('');
-    html += '<div class="page-break"></div>' +
-      '<table><tr style="background:#566573;color:white;"><th colspan="2">月次オプション</th></tr>' +
+    html += ((r.hasA || r.hasB || r.hasC) ? '<div class="page-break"></div>' : '') +
+      '<table><tr style="background:#566573;color:white;"><th colspan="2">システム利用サービス</th></tr>' +
       '<tr style="background:#EEF2F7;"><th>項目</th><th class="right">金額</th></tr>' +
       optionRows +
-      '<tr><td class="right bold">月次オプション 小計</td><td class="right bold">' + optionItems.reduce((sum, item) => sum + item.amount, 0).toLocaleString() + '円</td></tr></table>';
+      '<tr><td class="right bold">システム利用サービス 小計</td><td class="right bold">' + optionItems.reduce((sum, item) => sum + item.amount, 0).toLocaleString() + '円</td></tr></table>';
   }
   return html;
 }
@@ -1361,7 +1389,7 @@ function monthlyFeeTableHtml(aBaseLabel, includeABaseNote) {
     '<tr><td>相談のみ</td><td class="right">100円/名</td></tr></table>' +
     '<table style="margin-top:8px;"><tr style="background:#566573;color:white;"><th>処遇改善対象人数</th><th class="right">人数単価（段階計算）</th></tr>' + rateRowsHtml(SHOGUU_RATES) + '</table>' +
     '<div class="page-break"></div>' +
-    '<h2 style="font-size:13pt; margin:14px 0 8px; color:#2E4057; border-bottom:1px solid #2E4057; padding-bottom:4px;">月次オプション</h2>' +
+    '<h2 style="font-size:13pt; margin:14px 0 8px; color:#2E4057; border-bottom:1px solid #2E4057; padding-bottom:4px;">システム利用サービス</h2>' +
     '<table><tr style="background:#2E4057;color:white;"><th>項目</th><th class="right">月額・年額報酬（税抜）</th></tr>' + officeRows + '</table>' +
     '<div style="margin-top:12px; font-size:9pt; color:#555;">※従業員単価は段階計算です。例：21名の場合、1～20名単価と21名以降の単価を組み合わせて計算します。<br>※表示額は税抜きです。消費税が別途かかります。源泉所得税は報酬額（税抜）を基準に計算します。' +
     (includeABaseNote ? '<br>※労務サポート基本料は業務内容・契約内容により異なります。詳細はお見積書をご確認ください。' : '') +
@@ -1453,20 +1481,35 @@ function printConfirmationSet() {
   calc();
   if (!calcResult.items) { alert('サービスを選択してください'); return; }
   const r = calcResult;
-  const contractHtml = contractContentHtml(r);
-  if (!contractHtml) { alert('契約書を生成できる契約内容を選択してください'); return; }
-  // 確認用セットのみ、契約書タイトルに（案）を付ける
-  const draftContractHtml = contractHtml.replace(
-    '<div class="title">業 務 委 託 契 約 書</div>',
-    '<div class="title">業 務 委 託 契 約 書（案）</div>'
-  );
+  const want = id => { const el = document.getElementById(id); return !!(el && el.checked && !el.disabled); };
+  const docs = [
+    { id: 'confirmDocEstimate', name: 'お見積書' },
+    { id: 'confirmDocDetail', name: '料金計算明細' },
+    { id: 'confirmDocContract', name: '業務委託契約書（案）' },
+    { id: 'confirmDocFeeTable', name: '料金表' },
+  ];
+  const selected = docs.filter(d => want(d.id));
+  if (selected.length === 0) { alert('出力する書類を1つ以上選択してください'); return; }
+  const parts = [];
+  if (want('confirmDocEstimate')) parts.push(estimateContentHtml(r));
+  if (want('confirmDocDetail')) parts.push(detailContentHtml(r));
+  if (want('confirmDocContract')) {
+    const contractHtml = contractContentHtml(r);
+    if (!contractHtml) { alert('契約書を生成できる契約内容を選択してください'); return; }
+    // 確認用セットのみ、契約書タイトルに（案）を付ける
+    parts.push(contractHtml.replace(
+      '<div class="title">業 務 委 託 契 約 書</div>',
+      '<div class="title">業 務 委 託 契 約 書（案）</div>'
+    ));
+  }
+  if (want('confirmDocFeeTable')) {
+    const setABaseLabel = r.hasA ? (r.aBase.toLocaleString() + '円') : '15,000円〜';
+    parts.push(feeTableSectionStyle() + feeTableSectionHtml(setABaseLabel));
+  }
   const pageBreak = '<div class="page-break"></div>';
-  const setABaseLabel = r.hasA ? (r.aBase.toLocaleString() + '円') : '15,000円〜';
-  const html = estimateContentHtml(r) + pageBreak +
-    detailContentHtml(r) + pageBreak +
-    draftContractHtml + pageBreak +
-    feeTableSectionStyle() + feeTableSectionHtml(setABaseLabel);
-  printHTML(html, buildPrintTitle('お見積書一式', r.clientName));
+  // ファイル名：4つ全部は「お見積書一式」、一部のみは選んだ書類名を「・」でつなぐ
+  const kind = selected.length === docs.length ? 'お見積書一式' : selected.map(d => d.name).join('・');
+  printHTML(parts.join(pageBreak), buildPrintTitle(kind, r.clientName));
 }
 function printSigningSet() {
   calc();
